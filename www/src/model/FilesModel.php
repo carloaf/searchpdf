@@ -5,7 +5,7 @@ namespace Model;
 /**
  * FilesModel class
  *
- * @author Taylor Lopes <taylorlopes@gmail.com> & Augusto
+ * @author Augusto <carloafernandes@gmail.com>
  * @version 2.1 (Com ordenação e tradução de meses)
  * @license MIT
  */

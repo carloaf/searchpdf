@@ -6,8 +6,13 @@ use Slim\Views\Twig;
 use Model\FilesModel;
 
 /**
- * PanelController class
- * Controlador do painel principal da aplicação (versão modernizada)
+ * Panel Controller
+ * 
+ * Controla o painel de busca e exibição de documentos.
+ *
+ * @author Augusto <carloafernandes@gmail.com>
+ * @version 1.0
+ * @license MIT
  */
 class PanelController
 {

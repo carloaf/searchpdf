@@ -88,7 +88,7 @@ Este projeto está licenciado sob a licença MIT - veja o arquivo LICENSE para d
 
 ## Autoria
 
-Desenvolvido inicialmente por Taylor Lopes e aprimorado por Augusto.
+Desenvolvido inicialmente por Augusto <carloafernandes@gmail.com>.
 
 ---
 

@@ -14,14 +14,12 @@ ATENÇÃO: MANIPULE ESTE SCRIPT COM ENCODE UTF-8 (NÃO UTILIZE ISO-8856-1)
 
 
 /**
- * Configuração geral da aplicação
+ * Arquivo de configuração (exemplo do arquivo settings.php) 
  * 
- * @author Taylor Lopes <taylor.lopes@eb.mil.br>
- * @copyright Public domain, Gab Cmt Ex
+ * @version 1.5
+ * @author Augusto <carloafernandes@gmail.com>
+ * @copyright Public domain
  * @license MIT
- * @version 2.1
- * @uses Servidor PHP >= 7.3 + poppler-utils (pdftotext): sudo apt install poppler-utils
- *  
  */
 
 
