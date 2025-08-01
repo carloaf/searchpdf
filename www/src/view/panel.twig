@@ -1,0 +1,127 @@
+{# Este template agora é o "recheio" do base.twig #}
+{% extends "base.twig" %}
+
+{% block content %}
+<div class="container search-container my-5">
+    <div class="text-center mb-4">
+        <h1 class="display-5 fw-light">{{ lang.main_title ?? 'Pesquisa de Documentos' }}</h1>
+        <p class="lead text-muted">Utilize a busca abaixo para encontrar documentos.</p>
+    </div>
+      
+    <!-- Bloco de estatísticas com placeholders -->
+    <div class="search-stats text-muted mb-4">
+        <span><i class="fas fa-history me-1"></i> Total de Buscas: <strong id="stats-total">...</strong></span>
+        <span><i class="fas fa-calendar-week me-1"></i> Buscas na Última Semana: <strong id="stats-week">...</strong></span>
+        <span><i class="fas fa-file-pdf me-1"></i> Último Arquivo Indexado: <strong id="stats-last-file">...</strong></span>
+    </div>
+
+    <!-- Barra de Busca -->
+    <div class="input-group input-group-lg search-bar-wrapper mb-4">
+        <span class="input-group-text"><i class="fas fa-search"></i></span>
+        <input type="text" class="form-control" id="input-search" placeholder="Digite sua busca...">
+        <button class="btn btn-light border" type="button" data-bs-toggle="collapse" data-bs-target="#search-options">
+            <i class="fas fa-sliders-h"></i>
+        </button>
+        <button class="btn btn-success" id="btn-search" type="button">Buscar</button>
+    </div>
+
+    <!-- Opções de Busca (Colapsável) -->
+    <div class="collapse" id="search-options">
+        <div class="card card-body bg-light border-0 mb-4">
+            <div class="row">
+                <div class="col-md-6">
+                    <strong>Tipo de Busca:</strong>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="search-type" id="chk-structure-file" >
+                        <label class="form-check-label" for="chk-structure-file">Nomes de arquivos e pastas</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="search-type" id="chk-search-file" checked>
+                        <label class="form-check-label" for="chk-search-file">Conteúdo dos arquivos</label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <strong>Opções:</strong>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="chk-ignore-case">
+                        <label class="form-check-label" for="chk-ignore-case">Diferenciar maiúsculas/minúsculas</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="chk-exact-match">
+                        <label class="form-check-label" for="chk-exact-match">Pesquisar palavra inteira</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Área da Árvore de Arquivos e Resultados -->
+    <div class="row">
+        <div class="col-lg-5">
+            <div id="file-tree-card" class="card">
+                <div class="card-header">
+                    <i class="fas fa-folder-tree me-2"></i> Selecione os arquivos ou pastas
+                </div>
+                <div class="card-body file-tree-container">
+                    {{ treeHtml|raw }} {# <<-- RENDERIZA A ÁRVORE HTML #}
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-7">
+            <div id="search-results-container">
+                <div class="card">
+                    <div class="card-body text-center text-muted">
+                        <p class="mb-0">Os resultados da sua busca aparecerão aqui.</p>
+                    </div>
+                </div>
+                            
+                <!-- Área de Gráficos (Modificada para layout vertical) -->
+                <div id="chart-placeholder" class="card mt-4">
+                    <div class="card-header">
+                        <i class="fas fa-chart-bar me-2"></i> Buscas Realizadas (Últimos 7 Dias)
+                    </div>
+                    <div class="card-body">
+                        <!-- Container do gráfico de buscas diárias -->
+                        <div class="chart-wrapper">
+                            <canvas id="daily-searches-chart" class="chart-canvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="chart-terms-placeholder" class="card mt-4">
+                    <div class="card-header">
+                        <i class="fas fa-search me-2"></i> Termos Técnicos Mais Pesquisados
+                    </div>
+                    <div class="card-body">
+                        <!-- Container do gráfico de termos mais pesquisados -->
+                        <div class="chart-wrapper">
+                            <canvas id="top-terms-chart" class="chart-canvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- ... (código da área da árvore e resultados) ... -->
+    <div class="row">
+        <div class="col-lg-5">
+            <!-- ... (card da árvore) ... -->
+        </div>
+        <div class="col-lg-7">
+            <!-- ... (container dos resultados) ... -->
+        </div>
+    </div>
+
+    <!-- --- ADICIONE O BLOCO ABAIXO --- -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="developer-signature">
+                Desenv: Augusto
+            </div>
+        </div>
+    </div>
+    <!-- --- FIM DA ADIÇÃO --- -->
+
+</div> <!-- Fim do .search-container -->
+{% endblock %}

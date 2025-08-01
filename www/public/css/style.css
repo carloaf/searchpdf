@@ -1,0 +1,513 @@
+/*
+ * ===================================================================
+ * ESTILOS MODERNOS PARA A APLICAÇÃO SEARCHPDF (vFinal Atualizada)
+ * ===================================================================
+ */
+
+:root {
+    --primary-color: #2e7d32; /* Verde escuro para o tema principal */
+    --primary-light: #60ad5e; /* Verde mais claro */
+    --primary-dark: #005005; /* Verde mais escuro */
+    --accent-color: #ff8f00; /* Laranja âmbar como cor de destaque */
+    --text-primary: #212121; /* Texto principal */
+    --text-secondary: #757575; /* Texto secundário */
+    --bg-color: #f5f7fa; /* Fundo com um tom azulado */
+    --card-bg: #ffffff; /* Fundo dos cards */
+    --border-color: #e0e0e0; /* Cor das bordas */
+    --success-color: #43a047; /* Verde para sucesso */
+    --warning-color: #ffa000; /* Âmbar para avisos */
+    --error-color: #d32f2f; /* Vermelho para erros */
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    font-family: 'Roboto', 'Segoe UI', Arial, sans-serif;
+}
+
+.search-container {
+    max-width: 1140px;
+    margin: 2rem auto;
+}
+
+/* --- Barra de Busca --- */
+.search-bar-wrapper {
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.08);
+    border-radius: 0.5rem;
+}
+.search-bar-wrapper .input-group-text {
+    background-color: #fff;
+    border-right: none;
+    color: var(--primary-color);
+}
+.search-bar-wrapper .form-control {
+    border-left: none;
+}
+.search-bar-wrapper .form-control:focus {
+    box-shadow: none;
+    border-color: var(--primary-light);
+}
+.search-bar-wrapper .btn {
+    padding: 0.75rem 1.5rem;
+}
+.search-bar-wrapper .btn-success {
+    background-color: var(--primary-color);
+    border-color: var(--primary-dark);
+}
+/* --- Árvore de Arquivos --- */
+#file-tree-card {
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    border: none;
+    overflow: hidden;
+    height: 100%;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+#file-tree-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
+
+#file-tree-card .card-header {
+    background-color: var(--primary-color);
+    color: white;
+    border-bottom: none;
+    padding: 1rem 1.5rem;
+    font-weight: 500;
+}
+
+.file-tree-container {
+    max-height: 600px;
+    overflow-y: auto;
+    padding: 1rem;
+    background-color: var(--card-bg);
+}
+
+/* Estilizando a barra de rolagem para combinar com o tema */
+.file-tree-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.file-tree-container::-webkit-scrollbar-track {
+    background: rgba(46, 125, 50, 0.05);
+    border-radius: 4px;
+}
+
+.file-tree-container::-webkit-scrollbar-thumb {
+    background-color: rgba(46, 125, 50, 0.2);
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+
+.file-tree-container::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(46, 125, 50, 0.4);
+}
+.file-tree ul {
+    padding-left: 1.5rem;
+    border-left: 1px solid rgba(46, 125, 50, 0.15); /* Verde muito suave para as linhas */
+    margin-left: 8px; /* Alinha com o ícone */
+    position: relative;
+}
+
+/* Adiciona linhas horizontais de conexão */
+.file-tree li {
+    list-style-type: none;
+    padding: 0.2rem 0;
+    position: relative;
+}
+
+/* Adiciona linha horizontal que conecta à linha vertical */
+.file-tree li:before {
+    content: "";
+    position: absolute;
+    top: 15px;
+    left: -1.5rem;
+    width: 0.8rem;
+    height: 1px;
+    background-color: rgba(46, 125, 50, 0.15); /* Verde muito suave */
+}
+
+/* Esconde todas as sub-listas por padrão */
+/* .file-tree ul ul {
+    display: none;
+} */
+.file-tree .folder-item.collapsed + ul {
+    display: none;
+}
+.file-tree .folder-item, .file-tree .file-item {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0.7rem;
+    border-radius: 0.3rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.95rem;
+    position: relative;
+}
+
+.file-tree .folder-item:hover, .file-tree .file-item:hover {
+    background-color: rgba(46, 125, 50, 0.12);
+    color: var(--primary-color);
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+/* Estilo especial para pasta aberta */
+.file-tree .folder-item:not(.collapsed) {
+    background-color: rgba(46, 125, 50, 0.08);
+    border-left: 2px solid rgba(46, 125, 50, 0.5);
+    padding-left: calc(0.7rem - 2px); /* Compensa a borda */
+    font-weight: 500;
+}
+
+.file-tree .folder-toggle {
+    transition: transform 0.2s ease;
+    color: var(--primary-color);
+    margin-right: 0.4rem;
+}
+/* Gira o ícone quando a pasta NÃO está colapsada */
+.file-tree .folder-item:not(.collapsed) > .folder-toggle {
+    transform: rotate(90deg);
+}
+.file-tree .form-check-input {
+    cursor: pointer;
+    margin-right: 0.5rem;
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--primary-color);
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.15);
+}
+
+.file-tree .form-check-input:checked {
+    background-color: var(--primary-color);
+    border-color: var(--primary-dark);
+}
+
+.file-tree .form-check-input:hover {
+    transform: scale(1.1);
+    transition: transform 0.2s ease;
+    box-shadow: 0 0 5px rgba(46, 125, 50, 0.4);
+}
+
+/* Adicionando estilo aos labels dos checkboxes */
+.file-tree label {
+    cursor: pointer;
+    margin-bottom: 0;
+    display: inline-flex;
+    align-items: center;
+    transition: color 0.2s ease;
+    font-weight: 500;
+}
+
+.file-tree label:hover {
+    color: var(--primary-color);
+}
+
+/* Estilizando as linhas de conexão com efeitos sutis */
+.file-tree ul:hover {
+    border-left-color: rgba(46, 125, 50, 0.3); /* Verde mais visível ao passar o mouse */
+}
+
+.file-tree li:hover:before {
+    background-color: rgba(46, 125, 50, 0.3); /* Verde mais visível ao passar o mouse */
+}
+
+/* Estilo para o último item de cada lista (conexão especial) */
+.file-tree li:last-child:after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 50%;
+    left: -1.5rem;
+    width: 1px;
+    background-color: var(--card-bg); /* Cor de fundo para "cortar" a linha vertical */
+    z-index: 1;
+}
+
+/* Destaque de profundidade para melhorar a percepção visual */
+.file-tree ul ul {
+    border-left-color: rgba(46, 125, 50, 0.2); /* Ligeiramente mais escuro para níveis mais profundos */
+}
+
+.file-tree ul ul ul {
+    border-left-color: rgba(46, 125, 50, 0.25); /* Ainda mais escuro para o terceiro nível */
+}
+
+.file-tree ul ul ul ul {
+    border-left-color: rgba(46, 125, 50, 0.3); /* Mais escuro para o quarto nível */
+}
+
+/* Efeito de destaque do caminho ativo */
+.file-tree li.active-path > div {
+    background-color: rgba(46, 125, 50, 0.08);
+}
+
+.file-tree li.active-path > ul {
+    border-left-color: rgba(46, 125, 50, 0.4);
+}
+
+.file-tree .folder-name, .file-tree .file-name {
+    margin-left: 0.3rem;
+    flex-grow: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 80%;
+}
+
+/* Adiciona cores diferentes para tipos de arquivos */
+.file-tree .file-item[data-ext="pdf"] .file-name {
+    color: var(--primary-color);
+}
+
+/* Estilo para ícones de pasta e arquivo */
+.file-tree .folder-icon {
+    color: rgba(46, 125, 50, 0.8);
+    margin-right: 0.3rem;
+    font-size: 1.05rem;
+}
+
+.file-tree .file-icon {
+    color: rgba(46, 125, 50, 0.6);
+    margin-right: 0.3rem;
+    font-size: 0.95rem;
+}
+
+/* Estilizando as linhas de conexão com efeitos sutis */
+.file-tree ul:hover {
+    border-left-color: rgba(46, 125, 50, 0.3); /* Verde mais visível ao passar o mouse */
+}
+
+.file-tree li:hover:before {
+    background-color: rgba(46, 125, 50, 0.3); /* Verde mais visível ao passar o mouse */
+}
+
+/* --- Resultados da Busca --- */
+#search-results-container .list-group {
+    border-radius: 0.5rem; /* Bordas arredondadas para o container de resultados */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+/** Estilo para o nome do arquivo de resultado
+ * Centraliza o texto e aplica negrito
+ */
+.result-title {
+    width: 84%;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+}
+.d-flex {
+    background-color: #ebeff3; /* Fundo cinza claro */
+}
+
+#search-results-container .result-item {
+    background-color: var(--card-bg); /* Fundo branco para cada item */
+    border-color: var(--border-color);
+    padding: 1rem 1.25rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#search-results-container .result-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+.search-result-title {
+    font-size: 1.2rem;
+    font-weight: 450;
+    text-align: center;
+    color: #495057;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+/* Adiciona o fundo cinza claro para itens alternados (efeito "zebra") */
+#search-results-container .result-item:nth-of-type(odd) {
+    background-color: #f8f9fa; 
+}
+
+#search-results-container .result-title {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #343a40;
+}
+
+#search-results-container .result-snippet {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+#search-results-container .result-snippet .highlight {
+    background-color: rgba(46, 125, 50, 0.2); /* Verde claro (primary-color com transparência) */
+    color: var(--primary-dark); /* Verde escuro para o texto, para bom contraste */
+    font-weight: bold; /* Mantém o negrito */
+    padding: 2px 5px; /* Pequeno espaçamento interno */
+    border-radius: 4px; /* Bordas sutilmente arredondadas */
+}
+
+/*
+ * ===================================================================
+ * ESTILO PARA A ASSINATURA DO DESENVOLVEDOR
+ * ===================================================================
+ */
+
+.developer-signature {
+    text-align: center; /* Centraliza o texto */
+    font-style: italic; /* Estilo itálico e negrito */
+    font-weight: bold;
+    font-family: 'Georgia', 'Times New Roman', serif; /* Uma fonte serifada elegante */
+    font-size: 0.9rem; /* Tamanho de fonte discreto */
+    color: #8c96a3; /* Cor cinza-azulada sutil */
+    padding: 1rem 0; /* Espaçamento vertical */
+    border-top: 1px solid #e9ecef; /* Linha de separação fina no topo */
+}
+
+/* Estilos para as estatísticas de busca */
+.search-stats {
+    display: flex; /* Ativa o layout Flexbox */
+    justify-content: center; /* Centraliza os itens horizontalmente */
+    align-items: center; /* Alinha os itens verticalmente (útil se tiverem alturas diferentes) */
+    gap: 1.5rem; /* Cria um espaço consistente entre os itens (Total | Semana) */
+    margin-bottom: 1.5rem;
+    padding: 0.8rem;
+    font-size: 0.95rem;
+    color: var(--text-secondary); /* Cor cinza para o texto */
+    background-color: var(--card-bg);
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.search-stats:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.search-stats strong {
+    color: var(--primary-color); /* Cor mais escura para os números, para dar destaque */
+    font-weight: 500;
+}
+
+/* Estilo para o último arquivo indexado - harmonizado com stats-week */
+#stats-last-file {
+    max-width: 200px;
+    display: inline-block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: bottom;
+    color: var(--primary-color); /* Mesma cor usada nos outros stats */
+    font-weight: 500; /* Mesmo peso de fonte dos outros stats */
+}
+
+/* Sem estilos especiais quando temos arquivo, para manter consistência com outros stats */
+#stats-last-file.has-file {
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+/* Remove a barra vertical que estava no HTML, pois o 'gap' já faz a separação */
+.search-stats .mx-3 {
+    display: none;
+}
+
+/*
+ * ===================================================================
+ * ESTILOS PARA O GRÁFICO DE ESTATÍSTICAS (v4 - Design aprimorado)
+ * ===================================================================
+ */
+
+/* Card dos gráficos com sombra e bordas arredondadas */
+#chart-placeholder, #chart-terms-placeholder {
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    margin-top: 1.5rem;
+    border: none;
+    overflow: hidden;
+}
+
+/* Cabeçalho do card com fundo colorido */
+#chart-placeholder .card-header, #chart-terms-placeholder .card-header {
+    background-color: var(--primary-color);
+    color: white;
+    border-bottom: none;
+    padding: 1rem 1.5rem;
+    font-weight: 500;
+}
+
+/* O card-body agora tem o padding para dar o respiro geral */
+#chart-placeholder .card-body, #chart-terms-placeholder .card-body {
+    padding: 1.5rem;
+    background-color: var(--card-bg);
+}
+
+/* 
+ * O novo 'chart-wrapper' controla a altura do gráfico.
+ * 'position: relative' é crucial para o Chart.js.
+ */
+.chart-wrapper {
+    position: relative;
+    height: 250px; /* Altura reduzida para gráficos empilhados */
+    margin-top: 1rem;
+}
+
+/* 
+ * O canvas ocupa 100% do seu novo wrapper, que já tem a altura definida.
+ */
+canvas.chart-canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* Separador entre gráficos */
+#chart-terms-placeholder {
+    margin-top: 1.5rem;
+}
+
+/* 
+ * ===================================================================
+ * ESTILOS ADICIONAIS PARA A ÁRVORE DE ARQUIVOS (LINHAS VERDES)
+ * ===================================================================
+ */
+
+/* Efeito de foco para acessibilidade */
+.file-tree .folder-item:focus, 
+.file-tree .file-item:focus {
+    outline: 2px solid rgba(46, 125, 50, 0.25);
+    outline-offset: 1px;
+}
+
+/* Estilo para o último item de cada lista (conexão especial) */
+.file-tree li:last-child:after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 50%;
+    left: -1.5rem;
+    width: 1px;
+    background-color: var(--card-bg); /* Cor de fundo para "cortar" a linha vertical */
+    z-index: 1;
+}
+
+/* Destaque de profundidade para melhorar a percepção visual */
+.file-tree ul ul {
+    border-left-color: rgba(46, 125, 50, 0.2); /* Ligeiramente mais escuro para níveis mais profundos */
+}
+
+.file-tree ul ul ul {
+    border-left-color: rgba(46, 125, 50, 0.25); /* Ainda mais escuro para o terceiro nível */
+}
+
+.file-tree ul ul ul ul {
+    border-left-color: rgba(46, 125, 50, 0.3); /* Mais escuro para o quarto nível */
+}
+
+/* Efeito de destaque do caminho ativo */
+.file-tree li.active-path > div {
+    background-color: rgba(46, 125, 50, 0.08);
+}
+
+.file-tree li.active-path > ul {
+    border-left-color: rgba(46, 125, 50, 0.4);
+}

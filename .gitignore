@@ -1,0 +1,47 @@
+# Arquivos e diretórios a serem ignorados pelo Git
+
+# Diretórios gerados pelo Composer
+/www/vendor/
+
+# Arquivos de ambiente
+.env
+.env.local
+.env.*.local
+
+# Arquivos de configuração locais
+/www/config/settings.php
+
+# Arquivos e diretórios de uploads
+/uploads/
+/www/public/uploads/
+
+# Arquivos de logs
+*.log
+/logs/
+
+# Diretório de dados MySQL
+/mysql/
+
+# Arquivos temporários e de cache
+*.cache
+*.tmp
+temp/
+tmp/
+.DS_Store
+Thumbs.db
+
+# Arquivos de IDE e editores
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+
+# Arquivos de dependências do node (se existirem)
+/node_modules/
+package-lock.json
+yarn.lock
+
+# Outros arquivos específicos
+/www/composer.phar
