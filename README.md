@@ -35,7 +35,7 @@ SearchPDF é uma aplicação web desenvolvida para permitir a busca rápida e ef
 
 1. Clone este repositório:
 ```bash
-git clone https://github.com/seu-usuario/searchpdf.git
+git clone https://github.com/carloaf/searchpdf.git
 cd searchpdf
 ```
 
@@ -52,6 +52,21 @@ docker-compose up -d
 
 4. Acesse a aplicação:
 http://localhost:8080 (ou a porta configurada)
+
+## Desenvolvimento
+
+Este projeto segue o fluxo de trabalho de Git baseado em branches:
+
+- `main`: Branch principal que contém o código estável e pronto para produção
+- `dev`: Branch de desenvolvimento onde novas funcionalidades são integradas antes de ir para produção
+
+Para contribuir com o projeto:
+
+1. Clone o repositório
+2. Crie uma branch a partir de `dev` para sua funcionalidade: `git checkout -b feature/nova-funcionalidade`
+3. Faça suas alterações e adicione commits: `git commit -am "Adiciona nova funcionalidade"`
+4. Envie para o GitHub: `git push origin feature/nova-funcionalidade`
+5. Crie um Pull Request para a branch `dev`
 
 ## Configuração
 
