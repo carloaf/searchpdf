@@ -29,7 +29,8 @@
     
     <!-- Adiciona o cache buster ao nosso script.js e chart-functions.js -->
     <script src="{{ url_base }}/js/script.js?v={{ "now"|date("U") }}"></script>
-    <script src="{{ url_base }}/js/chart-functions.js?v={{ "now"|date("U") }}"></script>
+    <script src="{{ url_base }}/js/chart-functions.js?v={{ "now"|date("U") ~ random() }}"></script>
+    <script src="{{ url_base }}/debug-charts.js?v={{ "now"|date("U") }}"></script>
 </body>
 </html>
 </body>

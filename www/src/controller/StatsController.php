@@ -6,8 +6,6 @@ namespace Controller;
  * Controller para fornecer estatísticas avançadas
  *
  * @author Augusto <carloafernandes@gmail.com>
- * @version 1.0
- * @license MIT
  */
 class StatsController
 {
@@ -54,10 +52,15 @@ class StatsController
                 'avgResults' => $avgResults
             ];
             
-            return $response->withJson($data);
+            $response->getBody()->write(json_encode($data));
+            return $response->withHeader('Content-Type', 'application/json');
             
         } catch (\PDOException $e) {
-            return $response->withJson(['error' => 'Erro ao consultar banco de dados: ' . $e->getMessage()]);
+            // Log do erro
+            error_log('Erro ao buscar top termos: ' . $e->getMessage());
+            
+            $response->getBody()->write(json_encode(['error' => 'Erro ao consultar banco de dados: ' . $e->getMessage()]));
+            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
         }
     }
     
@@ -70,44 +73,91 @@ class StatsController
         $dbName = getenv('DB_NAME') ?: 'searchpdf_db';
         $dbUser = getenv('DB_USER') ?: 'searchpdf_user';
         $dbPass = getenv('DB_PASS') ?: 'user_password';
-
+        
         try {
             $pdo = new \PDO("mysql:host=$dbHost;dbname=$dbName;charset=utf8mb4", $dbUser, $dbPass);
             $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
             
-            // Extrai ano e mês do caminho do arquivo
+            // Consulta SQL mais abrangente para capturar documentos em vários formatos de caminho
             $stmt = $pdo->prepare("
                 SELECT 
-                    SUBSTRING_INDEX(SUBSTRING_INDEX(file_path, '/', -4), '/', 1) as year,
-                    SUBSTRING_INDEX(SUBSTRING_INDEX(file_path, '/', -3), '/', 1) as month,
+                    file_path,
                     COUNT(*) as document_count
                 FROM pdf_index 
-                GROUP BY year, month
-                ORDER BY year DESC, FIELD(month, 
-                    'JAN', 'Janeiro', 'FEV', 'Fevereiro', 'MAR', 'Marco', 
-                    'ABR', 'Abril', 'MAIO', 'Maio', 'JUN', 'Junho', 
-                    'JUL', 'Julho', 'AGO', 'Agosto', 'SET', 'Setembro',
-                    'OUT', 'Outubro', 'NOV', 'Novembro', 'DEZ', 'Dezembro')
+                GROUP BY file_path
             ");
             $stmt->execute();
             $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             
-            // Formata os dados para o gráfico
-            $data = [];
+            // Organiza os dados por ano e mês para o gráfico
+            $dataByYear = [];
+            $years = [];
+            $monthOrder = [
+                'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
+                'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+            ];
+            
             foreach ($results as $row) {
-                // Normaliza os nomes dos meses
-                $monthName = self::normalizeMonthName($row['month']);
-                $label = $monthName . '/' . $row['year'];
-                $data[] = [
-                    'label' => $label,
-                    'count' => (int)$row['document_count']
-                ];
+                $filePath = $row['file_path'];
+                $count = (int)$row['document_count'];
+                
+                // Tenta extrair ano e mês do caminho do arquivo
+                if (preg_match('#/(\d{4})/(BI|BA)/([^/]+)/#', $filePath, $matches)) {
+                    $year = $matches[1];
+                    $monthName = self::normalizeMonthName($matches[3]);
+                    
+                    if (!in_array($year, $years)) {
+                        $years[] = $year;
+                    }
+                    
+                    if (!isset($dataByYear[$year])) {
+                        $dataByYear[$year] = [];
+                    }
+                    
+                    if (!isset($dataByYear[$year][$monthName])) {
+                        $dataByYear[$year][$monthName] = 0;
+                    }
+                    
+                    $dataByYear[$year][$monthName] += $count;
+                }
+                // Tenta outro padrão para estruturas diferentes
+                elseif (preg_match('#/(\d{4})/([^/]+)/#', $filePath, $matches)) {
+                    $year = $matches[1];
+                    $monthName = self::normalizeMonthName($matches[2]);
+                    
+                    if (!in_array($year, $years)) {
+                        $years[] = $year;
+                    }
+                    
+                    if (!isset($dataByYear[$year])) {
+                        $dataByYear[$year] = [];
+                    }
+                    
+                    if (!isset($dataByYear[$year][$monthName])) {
+                        $dataByYear[$year][$monthName] = 0;
+                    }
+                    
+                    $dataByYear[$year][$monthName] += $count;
+                }
             }
             
-            return $response->withJson($data);
+            // Ordena os anos cronologicamente
+            sort($years);
+            
+            // Prepara a resposta com os dados organizados
+            $response->getBody()->write(json_encode([
+                'years' => $years,
+                'monthOrder' => $monthOrder,
+                'data' => $dataByYear
+            ]));
+            return $response->withHeader('Content-Type', 'application/json');
             
         } catch (\PDOException $e) {
-            return $response->withJson(['error' => 'Erro ao consultar banco de dados: ' . $e->getMessage()]);
+            // Log do erro
+            error_log('Erro ao buscar distribuição de documentos: ' . $e->getMessage());
+            
+            $response->getBody()->write(json_encode(['error' => 'Erro ao consultar banco de dados: ' . $e->getMessage()]));
+            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
         }
     }
     
