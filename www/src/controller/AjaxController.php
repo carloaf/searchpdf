@@ -8,14 +8,9 @@ use Slim\Views\Twig;
 use Model\FilesModel;
 
 /**
- * AjaxController class
- * 
- * Controlador das requisições via ajax
+ * Description of FilesController
  *
- * @author Taylor Lopes <taylor.lopes@eb.mil.br>
- * @copyright Public domain, Gab Cmt Ex
- * @license MIT
- * @version 1.0
+ * @author Augusto <carloafernandes@gmail.com>
  */
 class AjaxController
 {

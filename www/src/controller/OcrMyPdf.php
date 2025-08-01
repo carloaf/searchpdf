@@ -10,7 +10,7 @@ use Model\FilesModel;
  * 
  * Obtém OCR de um PDF
  *
- * @author Taylor Lopes <taylorlopes@gmail.com>
+ * @author Augusto <carloafernandes@gmail.com>
  * @version 1.0
  * @license MIT
  */
