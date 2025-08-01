@@ -1,0 +1,63 @@
+/**
+ * Estilos específicos para gráficos
+ * 
+ * @author Augusto <carloafernandes@gmail.com>
+ * @version 1.0
+ */
+
+/* Estilos para os gráficos */
+.chart-wrapper {
+    position: relative;
+    height: 250px;
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+.card .chart-canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+#top-searches-chart-container,
+#document-distribution-chart-container {
+    margin-top: 1.5rem;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.3s ease;
+}
+
+#top-searches-chart-container:hover,
+#document-distribution-chart-container:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Legenda personalizada */
+.chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+.chart-legend-item {
+    display: flex;
+    align-items: center;
+    margin: 0.5rem 1rem;
+}
+
+.chart-legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    margin-right: 0.5rem;
+}
+
+/* Tooltip personalizado */
+.chart-tooltip {
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    pointer-events: none;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}

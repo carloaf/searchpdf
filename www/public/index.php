@@ -329,13 +329,17 @@ $app->get('/files/list/{ano}', function ($request, $response, $args) {
     // Instancia o controller
     $controller = new \Controller\FilesController();
     
-    // Obtém a lista de arquivos
+    // Usa o controller para listar os arquivos do ano
     $arquivos = $controller->listarArquivosDoAno($ano);
     
-    // Retorna como JSON
+    // Retorna os arquivos em formato JSON
     $response->getBody()->write(json_encode($arquivos));
     return $response->withHeader('Content-Type', 'application/json');
 });
+
+// --- ROTAS PARA NOVAS ESTATÍSTICAS ---
+$app->get('/stats/top-searches', [\Controller\StatsController::class, 'getTopSearchTerms']);
+$app->get('/stats/document-distribution', [\Controller\StatsController::class, 'getDocumentDistribution']);
 
 // Rotas AJAX para a funcionalidade de busca
 $app->post('/searchFile', [\Controller\AjaxController::class, 'searchFile']);

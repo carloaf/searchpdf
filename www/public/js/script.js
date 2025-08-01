@@ -106,6 +106,10 @@ if (!window.searchAppInitialized) {
                     
                     console.log(`Maior número de documento do ano atual: ${maiorNumero}`);
                     console.log(`Data do arquivo: ${dataFormatada}`);
+                    
+                    // Carrega os gráficos adicionais após as estatísticas básicas
+                    loadTopSearchesChart();
+                    loadDocumentDistributionChart();
                 },
                 error: function() {
                     $('#stats-total').text('-');
@@ -483,6 +487,10 @@ if (!window.searchAppInitialized) {
                 $('#btn-search').click();
             }
         });
+
+        // Inicializa os novos gráficos após a página carregar
+        loadTopSearchesChart();
+        loadDocumentDistributionChart();
     });
 
 } // Fim da guarda de inicialização
