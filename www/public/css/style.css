@@ -23,6 +23,7 @@ body {
     background-color: var(--bg-color);
     color: var(--text-primary);
     font-family: 'Roboto', 'Segoe UI', Arial, sans-serif;
+    padding-bottom: 30px; /* Espaço para o footer fixo */
 }
 
 .search-container {
@@ -362,10 +363,28 @@ body {
     font-style: italic; /* Estilo itálico e negrito */
     font-weight: bold;
     font-family: 'Georgia', 'Times New Roman', serif; /* Uma fonte serifada elegante */
-    font-size: 0.9rem; /* Tamanho de fonte discreto */
+    font-size: 0.85rem; /* Tamanho de fonte reduzido */
     color: #8c96a3; /* Cor cinza-azulada sutil */
-    padding: 1rem 0; /* Espaçamento vertical */
+    padding: 0.5rem 0; /* Espaçamento vertical reduzido pela metade */
+    margin-top: 0.5rem; /* Margem superior reduzida */
     border-top: 1px solid #e9ecef; /* Linha de separação fina no topo */
+}
+
+/* Estilo para o rodapé global */
+.footer-signature {
+    text-align: center;
+    font-style: italic;
+    font-weight: bold;
+    font-family: 'Georgia', 'Times New Roman', serif;
+    font-size: 0.75rem;
+    color: #8c96a3;
+    padding: 0.3rem 0;
+    background-color: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    z-index: 1000;
 }
 
 /* Estilos para as estatísticas de busca */
