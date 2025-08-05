@@ -16,7 +16,7 @@ ATENÇÃO: MANIPULE ESTE SCRIPT COM ENCODE UTF-8 (NÃO UTILIZE ISO-8856-1)
 /**
  * Arquivo de configuração (exemplo do arquivo settings.php) 
  * 
- * @version 1.5
+ * @version 1.8
  * @author Augusto <carloafernandes@gmail.com>
  * @copyright Public domain
  * @license MIT
@@ -39,7 +39,7 @@ ATENÇÃO: MANIPULE ESTE SCRIPT COM ENCODE UTF-8 (NÃO UTILIZE ISO-8856-1)
  * @example https://localhost:8080/pesquisadocof/public
  * @uses Não colocar barra / no final do caminho, porém, no navegador obrigatoriamente use "/" ao final
  */ 
-$settings['url_base'] = 'https://intranet.gabcmt.eb.mil.br/buscar/public';
+$settings['url_base'] = 'https://localhost';
 
 
 
@@ -50,7 +50,7 @@ $settings['url_base'] = 'https://intranet.gabcmt.eb.mil.br/buscar/public';
  * @example /var/www/pesquisadocof/public/files
  * @uses Obrigatoriamente os arquivos devem ser colocados no diretório public/files
  */ 
-$settings['directory_files'] = '/var/www/intranet7/buscar/public/files';
+$settings['directory_files'] = '/var/www/localhost/public/files';
 
 
 
@@ -199,10 +199,10 @@ $settings['help'] = '
 
 
 // Título principal que aparece no topo da página entre tags <h2/>
-$lang['main_title'] = 'Atos Administrativos do Comandante do Exército';
+$lang['main_title'] = 'Atos Cmt OM';
 
 // Título que aparece na aba do navegador (tag HTML title) junto ao favicon
-$lang['page_title'] = 'Atos Administrativos do Comandante do Exército';
+$lang['page_title'] = 'Atos Cmt OM';
 
 // Placeholder que aparece dentro da caixa de texto da busca
 $lang['search_placeholder'] = '';

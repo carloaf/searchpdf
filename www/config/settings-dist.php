@@ -199,7 +199,7 @@ $settings['help'] = '
 
 
 // Título principal que aparece no topo da página entre tags <h2/>
-$lang['main_title'] = 'Atos Administrativos do Comandante do Exército';
+$lang['main_title'] = 'Atos Cmt OM';
 
 // Título que aparece na aba do navegador (tag HTML title) junto ao favicon
 $lang['page_title'] = 'Buscar';

@@ -16,7 +16,7 @@ ATENÇÃO: MANIPULE ESTE SCRIPT COM ENCODE UTF-8 (NÃO UTILIZE ISO-8856-1)
 /**
  * Arquivo de configuração (exemplo do arquivo settings.php) 
  * 
- * @version 1.5
+ * @version 1.8
  * @author Augusto <carloafernandes@gmail.com>
  * @copyright Public domain
  * @license MIT
@@ -39,7 +39,7 @@ ATENÇÃO: MANIPULE ESTE SCRIPT COM ENCODE UTF-8 (NÃO UTILIZE ISO-8856-1)
  * @example https://localhost:8080/pesquisadocof/public
  * @uses Não colocar barra / no final do caminho, porém, no navegador obrigatoriamente use "/" ao final
  */ 
-$settings['url_base'] = 'https://arquivo2.gabcmt.eb.mil.br/ostensivo/public';
+$settings['url_base'] = 'http://localhost:8080';
 
 
 
@@ -50,7 +50,7 @@ $settings['url_base'] = 'https://arquivo2.gabcmt.eb.mil.br/ostensivo/public';
  * @example /var/www/pesquisadocof/public/files
  * @uses Obrigatoriamente os arquivos devem ser colocados no diretório public/files
  */ 
-$settings['directory_files'] = '/var/www/docof2/ostensivo/public/files';
+$settings['directory_files'] = '/var/www/searchpdf/public/files';
 
 
 
@@ -199,10 +199,10 @@ $settings['help'] = '
 
 
 // Título principal que aparece no topo da página entre tags <h2/>
-$lang['main_title'] = 'Documentos Ostensivos do Gabinete do Comandante do Exército';
+$lang['main_title'] = 'Documentos em PDF';
 
 // Título que aparece na aba do navegador (tag HTML title) junto ao favicon
-$lang['page_title'] = 'Documentos Ostensivos do Gabinete do Comandante do Exército';
+$lang['page_title'] = 'Documentos em PDF';
 
 // Placeholder que aparece dentro da caixa de texto da busca
 $lang['search_placeholder'] = '';
@@ -246,77 +246,18 @@ $lang['button_back'] = 'Voltar';
 /* ************************************************************************* */
 
 
-
-/**
- * Cor de botões e tooltips, com base no Bootstrap v3.3.7
- * 
- * @example Opções: 
- * default
- * success  (default)
- * primary
- * danger
- * warning
- * info
- * link
- */
 $tpl['template_color']   = 'success';
 
 
-
-/**
- * Cor do painel no topo (jumbotron), com base no Bootstrap v3.3.7
- * 
- * @example Opções: 
- * default
- * success  (default)
- * primary
- * danger
- * warning
- * info
- * link
- */
 $tpl['jumbotron_color']  = 'link';
 
 
-
-/**
- * Cor da caixa de diálogo de ajuda (dropdown), com base no Bootstrap v3.3.7
- * 
- * @example Opções: 
- * default
- * success  (default)
- * primary
- * danger
- * warning
- * info
- * link
- */
 $tpl['help_color'] = 'success';
 
 
-
-/**
- * Define o tipo de ícone que expande os subdiretórios (expanded)
- * 
- * @example Opções:
- * glyphicon glyphicon-hand-right
- * glyphicon glyphicon-folder-close 
- * glyphicon glyphicon-plus 
- * glyphicon glyphicon-chevron-right (default)
- */
 $tpl['expandIcon'] = 'glyphicon glyphicon-chevron-right';
 
 
-
-/** 
- * Define o tipo de ícone que recolhe/oculta um subdiretório (collapsed)
- * 
- * @example Opções:
- * glyphicon glyphicon-hand-down
- * glyphicon glyphicon-folder-open 
- * glyphicon glyphicon-minus
- * glyphicon glyphicon-chevron-down (default)
- */ 
 $tpl['collapseIcon'] = 'glyphicon glyphicon-chevron-down';
 
   
