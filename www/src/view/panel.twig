@@ -56,10 +56,10 @@
     </div>
 
     <!-- Área da Árvore de Arquivos e Resultados -->
-    <div class="row">
+    <div class="row equal-height">
         <div class="col-lg-5">
             <div id="file-tree-card" class="card">
-                <div class="card-header">
+                <div class="card-header bg-primary">
                     <i class="fas fa-folder-tree me-2"></i> Selecione os arquivos ou pastas
                 </div>
                 <div class="card-body file-tree-container">
@@ -68,16 +68,10 @@
             </div>
         </div>
         <div class="col-lg-7">
-            <div id="search-results-container">
-                <div class="card">
-                    <div class="card-body text-center text-muted">
-                        <p class="mb-0">Os resultados da sua busca aparecerão aqui.</p>
-                    </div>
-                </div>
-                            
+            <div id="search-results-container" class="pt-0">        
                 <!-- Área de Gráficos (Modificada para layout vertical) -->
-                <div id="chart-placeholder" class="card mt-4">
-                    <div class="card-header">
+                <div id="chart-placeholder" class="card">
+                    <div class="card-header bg-primary">
                         <i class="fas fa-chart-bar me-2"></i> Buscas Realizadas (Últimos 7 Dias)
                     </div>
                     <div class="card-body">
@@ -89,7 +83,7 @@
                 </div>
                 
                 <div id="chart-terms-placeholder" class="card mt-4">
-                    <div class="card-header">
+                    <div class="card-header bg-primary">
                         <i class="fas fa-search me-2"></i> Termos Técnicos Mais Pesquisados
                     </div>
                     <div class="card-body">
@@ -101,17 +95,15 @@
                 </div>
                 
                 
-                <!-- Containers para os novos gráficos -->
-                <!-- Top Searches container removed -->
-                
+                <!-- Containers para o gráfico de distribuição de documentos -->
                 <div id="document-distribution-chart-container" class="card mt-4">
-                    <div class="card-header">
+                    <div class="card-header bg-primary">
                         <i class="fas fa-file-alt me-2"></i> Distribuição de Documentos por Mês
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
                             <select id="year-selector" class="form-select">
-                                <option value="all">Todos os anos</option>
+                                <option value="all" selected>Todos os anos</option>
                             </select>
                         </div>
                         <div class="chart-wrapper">
@@ -122,18 +114,7 @@
             </div>
         </div>
     </div>
-</div>
-<!-- ... (código da área da árvore e resultados) ... -->
-    <div class="row">
-        <div class="col-lg-5">
-            <!-- ... (card da árvore) ... -->
-        </div>
-        <div class="col-lg-7">
-            <!-- ... (container dos resultados) ... -->
-        </div>
-    </div>
 
-    <!-- --- ADICIONE O BLOCO ABAIXO --- -->
     <div class="row mt-5">
         <div class="col-12">
             <div class="developer-signature">
@@ -141,7 +122,6 @@
             </div>
         </div>
     </div>
-    <!-- --- FIM DA ADIÇÃO --- -->
 
 </div> <!-- Fim do .search-container -->
 {% endblock %}

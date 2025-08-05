@@ -1,5 +1,13 @@
-// Função para depuração do DOM dos gráficos
+/**
+ * chart-functions.js
+ * Responsável por carregar e renderizar os gráficos na aplicação SearchPDF
+ */
+
+// Função para depuração do DOM dos gráficos (modo silencioso)
 function debugChartContainers() {
+    // Função mantida mas com logs desativados para reduzir ruído no console
+    // Descomente os logs abaixo apenas durante depuração quando necessário
+    /*
     console.log('==== DEBUG: Estrutura dos Containers ====');
     console.log('chart-placeholder existe:', $('#chart-placeholder').length > 0);
     console.log('document-distribution-chart-container existe:', $('#document-distribution-chart-container').length > 0);
@@ -15,23 +23,35 @@ function debugChartContainers() {
         console.log(`Canvas #${index} - id: ${this.id}, width: ${$(this).width()}, height: ${$(this).height()}`);
     });
     console.log('=======================================');
+    */
+}
+
+// Função auxiliar para manipulação silenciosa de erros
+function silentError(fn) {
+    return function() {
+        try {
+            return fn.apply(this, arguments);
+        } catch (e) {
+            // Silenciosamente ignora erros
+            return null;
+        }
+    };
 }
 
 // Função para carregar o gráfico de distribuição de documentos
 function loadDocumentDistributionChart() {
-    console.log('Iniciando carregamento do gráfico de distribuição de documentos');
+    // Verifica se chart-placeholder existe antes de prosseguir
+    if (!$('#chart-placeholder').length) {
+        return; // Sai silenciosamente se não houver onde anexar o gráfico
+    }
+    
     $.ajax({
         url: window.location.pathname.endsWith('/panel') ? 'stats/document-distribution' : '/stats/document-distribution',
         method: 'GET',
         dataType: 'json',
         success: function(data) {
-            console.log('Dados recebidos para o gráfico de distribuição:', data);
-            // Atualiza o indicador visual
-            $('#document-dist-status span').removeClass('bg-warning').addClass('bg-success').text('Dados recebidos');
-            
             // Verifica se temos um container para o gráfico
             if (!$('#document-distribution-chart-container').length) {
-                console.log('Criando container para o gráfico de distribuição');
                 // Se não existir, cria o elemento no DOM
                 const chartHtml = `
                 <div class="card mt-4 shadow-sm" id="document-distribution-chart-container">
@@ -50,42 +70,24 @@ function loadDocumentDistributionChart() {
                 
                 // Adiciona após o chart-placeholder diretamente
                 $('#chart-placeholder').after(chartHtml);
-                console.log('Container criado após o chart-placeholder');
-            } else {
-                console.log('Container para o gráfico de distribuição já existe');
             }
             
             const canvasElement = document.getElementById('document-distribution-chart');
             if (!canvasElement || !data || !data.years || !data.data) {
-                console.error('Elementos necessários para o gráfico de distribuição não encontrados:');
-                console.error('- canvasElement:', !!canvasElement);
-                console.error('- data:', !!data);
-                console.error('- data.years:', data && !!data.years);
-                console.error('- data.data:', data && !!data.data);
-                console.error('Dados completos:', data);
                 return;
             }
-            
-            console.log('Todos os elementos necessários para o gráfico de distribuição encontrados, configurando...');
-            
-            // Atualiza o indicador visual
-            $('#document-dist-status span').removeClass('bg-success').addClass('bg-primary').text('Renderizando gráfico');
             
             // Preenche o seletor de ano
             const yearSelector = $('#year-selector');
             yearSelector.empty();
-            yearSelector.append('<option value="all">Todos os anos</option>');
+            yearSelector.append('<option value="all" selected>Todos os anos</option>');
             
             data.years.forEach(year => {
                 yearSelector.append(`<option value="${year}">${year}</option>`);
-                console.log(`Adicionado ano ${year} ao seletor`);
             });
             
-            // Seleciona o ano atual por padrão, se disponível
-            const currentYear = new Date().getFullYear().toString();
-            if (data.years.includes(currentYear)) {
-                yearSelector.val(currentYear);
-            }
+            // Mantém "Todos os anos" como padrão
+            yearSelector.val('all');
             
             // Define as cores para cada mês
             const colorPalette = [
@@ -106,9 +108,13 @@ function loadDocumentDistributionChart() {
             // Função para atualizar o gráfico com base no ano selecionado
             function updateChart(selectedYear) {
                 // Usa o método do Chart.js para destruir um gráfico existente
-                const existingChart = Chart.getChart(canvasElement);
-                if (existingChart) {
-                    existingChart.destroy();
+                try {
+                    const existingChart = Chart.getChart(canvasElement);
+                    if (existingChart) {
+                        existingChart.destroy();
+                    }
+                } catch (e) {
+                    // Ignora erros ao tentar destruir gráficos
                 }
                 
                 // Prepara os dados com base no ano selecionado
@@ -152,114 +158,76 @@ function loadDocumentDistributionChart() {
                 }
                 
                 // Cria o novo gráfico
-                new Chart(canvasElement, {
-                    type: 'bar',  // Bar chart tipo coluna
-                    data: {
-                        labels: data.monthOrder,
-                        datasets: datasets
-                    },
-                    options: {
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                ticks: {
-                                    precision: 0
+                try {
+                    new Chart(canvasElement, {
+                        type: 'bar',  // Bar chart tipo coluna
+                        data: {
+                            labels: data.monthOrder,
+                            datasets: datasets
+                        },
+                        options: {
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        precision: 0
+                                    },
+                                    title: {
+                                        display: true,
+                                        text: 'Quantidade de Documentos',
+                                        font: {
+                                            weight: 'bold'
+                                        }
+                                    }
                                 },
-                                title: {
-                                    display: true,
-                                    text: 'Quantidade de Documentos',
-                                    font: {
-                                        weight: 'bold'
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: 'Mês',
+                                        font: {
+                                            weight: 'bold'
+                                        }
                                     }
                                 }
                             },
-                            x: {
-                                title: {
-                                    display: true,
-                                    text: 'Mês',
-                                    font: {
-                                        weight: 'bold'
+                            plugins: {
+                                tooltip: {
+                                    callbacks: {
+                                        title: function(tooltipItems) {
+                                            return data.monthOrder[tooltipItems[0].dataIndex];
+                                        }
                                     }
                                 }
-                            }
-                        },
-                        plugins: {
-                            tooltip: {
-                                callbacks: {
-                                    title: function(tooltipItems) {
-                                        return data.monthOrder[tooltipItems[0].dataIndex];
-                                    }
-                                }
-                            }
-                        },
-                        responsive: true,
-                        maintainAspectRatio: false
-                    }
-                });
+                            },
+                            responsive: true,
+                            maintainAspectRatio: false
+                        }
+                    });
+                } catch (e) {
+                    // Ignora erros ao criar o gráfico
+                }
             }
             
-            // Inicializa o gráfico com o valor selecionado
-            updateChart(yearSelector.val());
+            // Inicializa o gráfico com a opção "Todos os anos"
+            updateChart('all');
             
             // Adiciona evento de mudança ao seletor
             yearSelector.on('change', function() {
                 updateChart($(this).val());
             });
-            
-            // Atualiza o indicador visual
-            $('#document-dist-status span').removeClass('bg-primary').addClass('bg-success').text('Concluído');
-            
-            // Debug para verificar se o gráfico foi criado corretamente
-            setTimeout(function() {
-                debugChartContainers();
-                
-                // Verifica se o gráfico foi registrado no Chart.js
-                const chartInstance = Chart.getChart(canvasElement);
-                console.log('Gráfico registrado no Chart.js:', !!chartInstance);
-                if (chartInstance) {
-                    console.log('Tipo do gráfico:', chartInstance.config.type);
-                    console.log('Número de datasets:', chartInstance.data.datasets.length);
-                    console.log('Primeiro mês no gráfico:', chartInstance.data.labels[0]);
-                }
-            }, 500);
         },
         error: function(xhr, status, error) {
-            console.error('Erro ao carregar dados para o gráfico de distribuição:', error);
-            // Atualiza o indicador visual
-            $('#document-dist-status span').removeClass('bg-warning').addClass('bg-danger').text('Erro: ' + error);
+            // Erro silencioso na requisição AJAX
         }
     });
 }
 
 // Carrega todos os gráficos quando a página estiver pronta
 $(document).ready(function() {
-    console.log('Iniciando carregamento dos gráficos...');
-    
     // Remove qualquer container do gráfico de termos mais pesquisados se existir
     if ($('#top-searches-chart-container').length) {
         $('#top-searches-chart-container').remove();
-        console.log('Container do gráfico de termos mais pesquisados removido');
     }
-    
-    // Adiciona um indicador visual para acompanhar o carregamento
-    $('body').append('<div id="chart-loading-indicator" style="position: fixed; bottom: 10px; left: 10px; background-color: #fff; border: 1px solid #ddd; padding: 10px; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.1); z-index: 9999;"><div><strong>Status do carregamento:</strong></div><div id="document-dist-status">Distribuição de Documentos: <span class="badge bg-warning">Pendente</span></div></div>');
-    
-    // Verifica se o chart-placeholder existe
-    if ($('#chart-placeholder').length) {
-        console.log('Elemento chart-placeholder encontrado!');
-    } else {
-        console.error('Elemento chart-placeholder NÃO encontrado!');
-    }
-    
-    // Verifica se o Chart.js está disponível
-    if (typeof Chart !== 'undefined') {
-        console.log('Chart.js está disponível!');
-    } else {
-        console.error('Chart.js NÃO está disponível!');
-    }
-    
-    // Executar debug inicial
-    debugChartContainers();
     
     // Carrega apenas o gráfico de distribuição de documentos
     loadDocumentDistributionChart();

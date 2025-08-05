@@ -1,0 +1,81 @@
+/**
+ * Estilos para garantir altura igual entre os containers
+ */
+
+/* Usa flexbox para alinhar a altura dos containers */
+.row.equal-height {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.row.equal-height > [class*='col-'] {
+    display: flex;
+    flex-direction: column;
+    height: 700px; /* Altura fixa para as colunas aumentada para acomodar gráficos maiores */
+}
+
+/* Garante que ambos os containers tenham exatamente a mesma altura */
+#file-tree-card, 
+#search-results-container {
+    height: 700px; /* Aumentada a altura fixa para garantir igualdade */
+    max-height: 700px; /* Altura máxima também */
+}
+
+/* Estilos específicos para o container da árvore */
+#file-tree-card {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Impede scroll no card em si */
+}
+
+#file-tree-card .card-header {
+    flex: 0 0 auto; /* O cabeçalho não se expande */
+}
+
+#file-tree-card .card-body {
+    flex: 1 1 auto; /* O corpo se expande para preencher o espaço */
+    overflow-y: auto; /* Adiciona scroll apenas no corpo */
+    padding: 1rem;
+}
+
+/* Estilos específicos para o container de resultados */
+#search-results-container {
+    padding-right: 5px; /* Pequeno ajuste para compensar a barra de rolagem */
+    overflow-y: auto; /* Permite rolagem */
+    padding-top: 0; /* Remove qualquer padding superior */
+    margin-top: 0; /* Remove qualquer margem superior */
+}
+
+/* Garante que o primeiro card dentro do container não tenha margem superior */
+#search-results-container > .card:first-child {
+    margin-top: 0 !important; /* Remove margem do primeiro card */
+}
+
+/* Ajusta a altura dos gráficos para caberem melhor no container */
+.chart-wrapper {
+    position: relative;
+    height: 170px; /* Altura aumentada em ~30% (de 130px para 170px) */
+    margin-top: 0.5rem;
+}
+
+/* Aumenta a altura do gráfico de distribuição de documentos que tem o seletor de ano */
+#document-distribution-chart-container .chart-wrapper {
+    height: 210px; /* Altura aumentada em ~30% (de 160px para 210px) */
+}
+
+/* Definições específicas para dispositivos móveis */
+@media (max-width: 991.98px) {
+    #file-tree-card, 
+    #search-results-container {
+        height: 400px; /* Altura menor em dispositivos móveis */
+        margin-bottom: 1.5rem;
+    }
+    
+    .chart-wrapper {
+        height: 155px; /* Altura aumentada em ~30% (de 120px para 155px) */
+    }
+    
+    #document-distribution-chart-container .chart-wrapper {
+        height: 195px; /* Altura aumentada em ~30% (de 150px para 195px) */
+    }
+}

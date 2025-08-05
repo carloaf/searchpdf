@@ -21,11 +21,6 @@
                 </div>
             </div>
         </div>
-        
-        <div id="test-chart-container" class="mt-4">
-            <h2>Gráfico de Teste</h2>
-            <canvas id="test-chart" height="250"></canvas>
-        </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
@@ -34,52 +29,21 @@
     
     <script>
         $(document).ready(function() {
-            console.log("Página carregada, testando Chart.js");
-            
-            // Testa se Chart.js está funcionando
-            if (typeof Chart !== 'undefined') {
-                console.log("Chart.js está disponível!");
-                
-                // Cria um gráfico de teste simples
-                const ctx = document.getElementById('test-chart').getContext('2d');
-                new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho'],
-                        datasets: [{
-                            label: 'Dados de teste',
-                            data: [12, 19, 3, 5, 2, 3],
-                            backgroundColor: 'rgba(46, 125, 50, 0.8)',
-                            borderColor: 'rgba(46, 125, 50, 1)',
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            y: {
-                                beginAtZero: true
-                            }
-                        }
+            // Carrega o gráfico de distribuição de documentos
+            $.ajax({
+                url: 'stats/document-distribution',
+                method: 'GET',
+                dataType: 'json',
+                success: function(data) {
+                    // Gráfico carregado com sucesso
+                    if (data && data.years && data.monthOrder && data.data) {
+                        console.log("Dados do gráfico carregados com sucesso.");
                     }
-                });
-                
-                console.log("Gráfico de teste criado!");
-                
-                // Carrega o gráfico real
-                $.ajax({
-                    url: 'stats/document-distribution',
-                    method: 'GET',
-                    dataType: 'json',
-                    success: function(data) {
-                        console.log("Dados do gráfico real:", data);
-                    },
-                    error: function(xhr, status, error) {
-                        console.error("Erro ao carregar dados:", error);
-                    }
-                });
-            } else {
-                console.error("Chart.js não está disponível!");
-            }
+                },
+                error: function(xhr, status, error) {
+                    console.error("Erro ao carregar dados do gráfico.");
+                }
+            });
         });
     </script>
 </body>

@@ -104,11 +104,10 @@ if (!window.searchAppInitialized) {
                         .addClass('has-file')
                         .attr('title', data.max_file || `Boletim Interno ${maiorNumero}`);
                     
-                    console.log(`Maior número de documento do ano atual: ${maiorNumero}`);
-                    console.log(`Data do arquivo: ${dataFormatada}`);
+                    // console.log(`Maior número de documento do ano atual: ${maiorNumero}`);
+                    // console.log(`Data do arquivo: ${dataFormatada}`);
                     
-                    // Carrega os gráficos adicionais após as estatísticas básicas
-                    loadTopSearchesChart();
+                    // Carrega apenas o gráfico de distribuição de documentos
                     loadDocumentDistributionChart();
                 },
                 error: function() {
@@ -488,8 +487,7 @@ if (!window.searchAppInitialized) {
             }
         });
 
-        // Inicializa os novos gráficos após a página carregar
-        loadTopSearchesChart();
+        // Inicializa o gráfico de distribuição após a página carregar
         loadDocumentDistributionChart();
     });
 
