@@ -4,6 +4,440 @@ if (!window.searchAppInitialized) {
 
     $(document).ready(function() {
 
+        const cssVar = (name, fallback = '') => {
+            const value = getComputedStyle(document.documentElement).getPropertyValue(name);
+            return value ? value.trim() || fallback : fallback;
+        };
+
+        const clamp01 = (value) => {
+            const number = Number(value);
+            if (!Number.isFinite(number)) {
+                return 0;
+            }
+            if (number < 0) return 0;
+            if (number > 1) return 1;
+            return number;
+        };
+
+        const toRgbaString = ({ r, g, b, a }) => {
+            const red = Math.round(Math.min(Math.max(r, 0), 255));
+            const green = Math.round(Math.min(Math.max(g, 0), 255));
+            const blue = Math.round(Math.min(Math.max(b, 0), 255));
+            const alpha = Math.round(clamp01(a) * 1000) / 1000;
+            return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+        };
+
+        const parseColorString = (color) => {
+            if (!color) return null;
+            const normalized = color.trim();
+            if (!normalized) return null;
+
+            if (normalized.startsWith('#')) {
+                let hex = normalized.slice(1);
+                if (hex.length === 3) {
+                    hex = hex.split('').map((char) => char + char).join('');
+                }
+                if (hex.length === 6) {
+                    const value = parseInt(hex, 16);
+                    if (Number.isNaN(value)) {
+                        return null;
+                    }
+                    return {
+                        r: (value >> 16) & 255,
+                        g: (value >> 8) & 255,
+                        b: value & 255,
+                        a: 1
+                    };
+                }
+                if (hex.length === 8) {
+                    const value = parseInt(hex, 16);
+                    if (Number.isNaN(value)) {
+                        return null;
+                    }
+                    return {
+                        r: (value >> 24) & 255,
+                        g: (value >> 16) & 255,
+                        b: (value >> 8) & 255,
+                        a: ((value & 255) / 255)
+                    };
+                }
+            }
+
+            const rgbaMatch = normalized.match(/rgba?\(([^)]+)\)/i);
+            if (rgbaMatch) {
+                const parts = rgbaMatch[1].split(',').map((part) => part.trim());
+                if (parts.length >= 3) {
+                    const r = parseFloat(parts[0]);
+                    const g = parseFloat(parts[1]);
+                    const b = parseFloat(parts[2]);
+                    const a = parts.length >= 4 ? parseFloat(parts[3]) : 1;
+                    if ([r, g, b, a].every((component) => !Number.isNaN(component))) {
+                        return { r, g, b, a: clamp01(a) };
+                    }
+                }
+            }
+
+            return null;
+        };
+
+        const colorWithAlpha = (color, alpha) => {
+            const parsed = parseColorString(color);
+            if (!parsed) {
+                return color || toRgbaString({ r: 0, g: 0, b: 0, a: clamp01(alpha) });
+            }
+            return toRgbaString({ ...parsed, a: clamp01(alpha) });
+        };
+
+        const mixColors = (colorA, colorB, weight, alphaOverride = null) => {
+            const parsedA = parseColorString(colorA);
+            const parsedB = parseColorString(colorB);
+
+            if (!parsedA && !parsedB) {
+                return colorA || colorB || '';
+            }
+
+            if (!parsedA) {
+                return alphaOverride !== null ? colorWithAlpha(colorB, alphaOverride) : colorB;
+            }
+
+            if (!parsedB) {
+                return alphaOverride !== null ? colorWithAlpha(colorA, alphaOverride) : colorA;
+            }
+
+            const w = clamp01(weight);
+            const mixed = {
+                r: parsedA.r * (1 - w) + parsedB.r * w,
+                g: parsedA.g * (1 - w) + parsedB.g * w,
+                b: parsedA.b * (1 - w) + parsedB.b * w,
+                a: alphaOverride !== null ? clamp01(alphaOverride) : (parsedA.a * (1 - w) + parsedB.a * w)
+            };
+            return toRgbaString(mixed);
+        };
+
+        const generateGradientPalette = (startColor, endColor, count, options = {}) => {
+            const total = Math.max(count, 0);
+            if (total === 0) {
+                return [];
+            }
+
+            const { startAlpha = 0.85, endAlpha = 0.55 } = options;
+            if (total === 1) {
+                return [mixColors(startColor, endColor, 0, startAlpha)];
+            }
+
+            const palette = [];
+            for (let i = 0; i < total; i++) {
+                const weight = i / (total - 1);
+                const alpha = startAlpha + (endAlpha - startAlpha) * weight;
+                palette.push(mixColors(startColor, endColor, weight, alpha));
+            }
+            return palette;
+        };
+
+        const themeUtils = {
+            cssVar,
+            colorWithAlpha,
+            generateGradientPalette,
+            mixColors,
+            parseColorString
+        };
+
+        window.searchThemeUtils = themeUtils;
+
+        let dailySearchesChart = null;
+        let topTermsChart = null;
+        let lastDailyChartData = null;
+        let lastTermsChartData = null;
+
+        // ===================================================================
+        // 0. PERSONALIZAÇÃO DE TEMA (Perfis de cores)
+        // ===================================================================
+        const $themePanel = $('#theme-settings-panel');
+        const $themeButton = $('#theme-settings-button');
+
+        if ($themePanel.length && $themeButton.length) {
+            const THEME_STORAGE_KEY = 'searchpdf_theme_profile';
+            const defaultTheme = 'default';
+            const themeProfiles = {
+                default: {
+                    label: 'Verde clássico',
+                    values: {
+                        '--primary-color': '#2e7d32',
+                        '--primary-light': '#60ad5e',
+                        '--primary-dark': '#005005',
+                        '--accent-color': '#ff8f00',
+                        '--text-primary': '#212121',
+                        '--text-secondary': '#757575',
+                        '--bg-color': '#f5f7fa',
+                        '--card-bg': '#ffffff',
+                        '--card-alt-bg': '#f8f9fa',
+                        '--border-color': '#e0e0e0',
+                        '--success-color': '#43a047',
+                        '--warning-color': '#ffa000',
+                        '--error-color': '#d32f2f',
+                        '--tree-connector-color': 'rgba(46, 125, 50, 0.15)',
+                        '--tree-connector-hover-color': 'rgba(46, 125, 50, 0.3)',
+                        '--tree-active-bg': 'rgba(46, 125, 50, 0.08)',
+                        '--tree-hover-bg': 'rgba(46, 125, 50, 0.12)',
+                        '--tree-hover-text': '#2e7d32',
+                        '--tree-folder-icon': 'rgba(46, 125, 50, 0.8)',
+                        '--tree-file-icon': 'rgba(46, 125, 50, 0.6)',
+                        '--tree-active-border': 'rgba(46, 125, 50, 0.5)',
+                        '--tree-shadow': 'rgba(46, 125, 50, 0.25)',
+                        '--tree-scroll-track': 'rgba(46, 125, 50, 0.05)',
+                        '--tree-scroll-thumb': 'rgba(46, 125, 50, 0.2)',
+                        '--tree-scroll-thumb-hover': 'rgba(46, 125, 50, 0.4)',
+                        '--file-tree-bg': '#ffffff',
+                        '--muted-text-color': '#757575',
+                        '--lead-text-color': '#5f6a73',
+                        '--stats-strong-color': '#2e7d32',
+                        '--chart-bar-color': 'rgba(46, 125, 50, 0.75)',
+                        '--chart-border-color': 'rgba(27, 94, 32, 1)',
+                        '--chart-secondary-color': 'rgba(255, 143, 0, 0.8)',
+                        '--chart-tooltip-bg': 'rgba(46, 125, 50, 0.9)',
+                        '--chart-tooltip-text': '#ffffff',
+                        '--search-highlight-bg': 'rgba(46, 125, 50, 0.2)',
+                        '--search-highlight-text': '#1b5e20'
+                    }
+                },
+                ocean: {
+                    label: 'Azul oceano',
+                    values: {
+                        '--primary-color': '#1e88e5',
+                        '--primary-light': '#64b5f6',
+                        '--primary-dark': '#0d47a1',
+                        '--accent-color': '#26c6da',
+                        '--text-primary': '#1a2733',
+                        '--text-secondary': '#546e7a',
+                        '--bg-color': '#f1f8ff',
+                        '--card-bg': '#ffffff',
+                        '--card-alt-bg': '#e3f2fd',
+                        '--border-color': '#cfd8dc',
+                        '--success-color': '#2e7d32',
+                        '--warning-color': '#ffb300',
+                        '--error-color': '#d84315',
+                        '--tree-connector-color': 'rgba(30, 136, 229, 0.2)',
+                        '--tree-connector-hover-color': 'rgba(30, 136, 229, 0.35)',
+                        '--tree-active-bg': 'rgba(30, 136, 229, 0.12)',
+                        '--tree-hover-bg': 'rgba(30, 136, 229, 0.08)',
+                        '--tree-hover-text': '#0d47a1',
+                        '--tree-folder-icon': 'rgba(30, 136, 229, 0.8)',
+                        '--tree-file-icon': 'rgba(30, 136, 229, 0.6)',
+                        '--tree-active-border': 'rgba(30, 136, 229, 0.4)',
+                        '--tree-shadow': 'rgba(30, 136, 229, 0.25)',
+                        '--tree-scroll-track': 'rgba(30, 136, 229, 0.08)',
+                        '--tree-scroll-thumb': 'rgba(30, 136, 229, 0.25)',
+                        '--tree-scroll-thumb-hover': 'rgba(30, 136, 229, 0.4)',
+                        '--file-tree-bg': '#ffffff',
+                        '--muted-text-color': '#546e7a',
+                        '--lead-text-color': '#3b4f5c',
+                        '--stats-strong-color': '#1e88e5',
+                        '--chart-bar-color': 'rgba(30, 136, 229, 0.75)',
+                        '--chart-border-color': 'rgba(13, 71, 161, 1)',
+                        '--chart-secondary-color': 'rgba(38, 198, 218, 0.75)',
+                        '--chart-tooltip-bg': 'rgba(13, 71, 161, 0.9)',
+                        '--chart-tooltip-text': '#e3f2fd',
+                        '--search-highlight-bg': 'rgba(30, 136, 229, 0.2)',
+                        '--search-highlight-text': '#0d47a1'
+                    }
+                },
+                midnight: {
+                    label: 'Noite urbana',
+                    values: {
+                        '--primary-color': '#37474f',
+                        '--primary-light': '#546e7a',
+                        '--primary-dark': '#102027',
+                        '--accent-color': '#ff7043',
+                        '--text-primary': '#eceff1',
+                        '--text-secondary': '#b0bec5',
+                        '--bg-color': '#1c252c',
+                        '--card-bg': '#263238',
+                        '--card-alt-bg': '#1f2a30',
+                        '--border-color': '#37474f',
+                        '--success-color': '#26a69a',
+                        '--warning-color': '#ffb74d',
+                        '--error-color': '#ef5350',
+                        '--tree-connector-color': 'rgba(236, 239, 241, 0.12)',
+                        '--tree-connector-hover-color': 'rgba(236, 239, 241, 0.25)',
+                        '--tree-active-bg': 'rgba(236, 239, 241, 0.08)',
+                        '--tree-hover-bg': 'rgba(236, 239, 241, 0.06)',
+                        '--tree-hover-text': '#ffb74d',
+                        '--tree-folder-icon': '#ff7043',
+                        '--tree-file-icon': 'rgba(255, 255, 255, 0.7)',
+                        '--tree-active-border': 'rgba(255, 112, 67, 0.55)',
+                        '--tree-shadow': 'rgba(0, 0, 0, 0.4)',
+                        '--tree-scroll-track': 'rgba(236, 239, 241, 0.08)',
+                        '--tree-scroll-thumb': 'rgba(255, 112, 67, 0.35)',
+                        '--tree-scroll-thumb-hover': 'rgba(255, 112, 67, 0.55)',
+                        '--file-tree-bg': '#1f2a30',
+                        '--muted-text-color': '#b0bec5',
+                        '--lead-text-color': '#cfd8dc',
+                        '--stats-strong-color': '#ffb74d',
+                        '--chart-bar-color': 'rgba(255, 112, 67, 0.75)',
+                        '--chart-border-color': 'rgba(255, 171, 145, 1)',
+                        '--chart-secondary-color': 'rgba(38, 166, 154, 0.7)',
+                        '--chart-tooltip-bg': 'rgba(55, 71, 79, 0.95)',
+                        '--chart-tooltip-text': '#eceff1',
+                        '--search-highlight-bg': 'rgba(255, 112, 67, 0.35)',
+                        '--search-highlight-text': '#ffe0b2'
+                    }
+                },
+                sunset: {
+                    label: 'Pôr do sol',
+                    values: {
+                        '--primary-color': '#ef6c00',
+                        '--primary-light': '#ffb74d',
+                        '--primary-dark': '#e65100',
+                        '--accent-color': '#ffca28',
+                        '--text-primary': '#4e342e',
+                        '--text-secondary': '#795548',
+                        '--bg-color': '#fff8e1',
+                        '--card-bg': '#ffffff',
+                        '--card-alt-bg': '#ffe0b2',
+                        '--border-color': '#f5c16c',
+                        '--success-color': '#8bc34a',
+                        '--warning-color': '#fb8c00',
+                        '--error-color': '#d84315',
+                        '--tree-connector-color': 'rgba(239, 108, 0, 0.2)',
+                        '--tree-connector-hover-color': 'rgba(239, 108, 0, 0.35)',
+                        '--tree-active-bg': 'rgba(239, 108, 0, 0.12)',
+                        '--tree-hover-bg': 'rgba(239, 108, 0, 0.08)',
+                        '--tree-hover-text': '#bf360c',
+                        '--tree-folder-icon': 'rgba(239, 108, 0, 0.85)',
+                        '--tree-file-icon': 'rgba(239, 108, 0, 0.65)',
+                        '--tree-active-border': 'rgba(239, 108, 0, 0.45)',
+                        '--tree-shadow': 'rgba(239, 108, 0, 0.28)',
+                        '--tree-scroll-track': 'rgba(239, 108, 0, 0.08)',
+                        '--tree-scroll-thumb': 'rgba(239, 108, 0, 0.25)',
+                        '--tree-scroll-thumb-hover': 'rgba(239, 108, 0, 0.4)',
+                        '--file-tree-bg': '#fff3e0',
+                        '--muted-text-color': '#8d6e63',
+                        '--lead-text-color': '#6d4c41',
+                        '--stats-strong-color': '#ef6c00',
+                        '--chart-bar-color': 'rgba(239, 108, 0, 0.75)',
+                        '--chart-border-color': 'rgba(191, 54, 12, 1)',
+                        '--chart-secondary-color': 'rgba(255, 202, 40, 0.8)',
+                        '--chart-tooltip-bg': 'rgba(191, 54, 12, 0.9)',
+                        '--chart-tooltip-text': '#fff3e0',
+                        '--search-highlight-bg': 'rgba(239, 108, 0, 0.25)',
+                        '--search-highlight-text': '#4e342e'
+                    }
+                }
+            };
+
+            const $themeOptions = $themePanel.find('.theme-option');
+            const $themeCloseButtons = $('#theme-settings-close, #theme-settings-close-bottom');
+            const $themeResetButton = $('#theme-reset-button');
+
+            $themeButton.attr('aria-expanded', 'false');
+
+            const getStoredTheme = () => {
+                try {
+                    return localStorage.getItem(THEME_STORAGE_KEY);
+                } catch (error) {
+                    return null;
+                }
+            };
+
+            const storeTheme = (themeId) => {
+                try {
+                    localStorage.setItem(THEME_STORAGE_KEY, themeId);
+                } catch (error) {
+                    // Armazenamento indisponível (ex.: modo privado)
+                }
+            };
+
+            const updateActiveTheme = (themeId) => {
+                $themeOptions.each(function() {
+                    const $option = $(this);
+                    const isActive = $option.data('theme') === themeId;
+                    $option.toggleClass('active', isActive)
+                           .attr('aria-pressed', isActive);
+                    $option.find('.theme-option__check').attr('aria-hidden', isActive ? 'false' : 'true');
+                });
+            };
+
+            const applyTheme = (themeId, { persist = true } = {}) => {
+                const selectedThemeId = themeProfiles[themeId] ? themeId : defaultTheme;
+                const profile = themeProfiles[selectedThemeId];
+
+                Object.entries(profile.values).forEach(([cssVar, value]) => {
+                    document.documentElement.style.setProperty(cssVar, value);
+                });
+
+                if (persist) {
+                    storeTheme(selectedThemeId);
+                }
+
+                updateActiveTheme(selectedThemeId);
+                document.body.setAttribute('data-theme', selectedThemeId);
+                document.dispatchEvent(new CustomEvent('searchpdf:themechange', {
+                    detail: { themeId: selectedThemeId }
+                }));
+            };
+
+            const openThemePanel = () => {
+                $themePanel.addClass('open').attr('aria-hidden', 'false');
+                $themeButton.attr('aria-expanded', 'true');
+            };
+
+            const closeThemePanel = () => {
+                $themePanel.removeClass('open').attr('aria-hidden', 'true');
+                $themeButton.attr('aria-expanded', 'false');
+            };
+
+            const toggleThemePanel = () => {
+                if ($themePanel.hasClass('open')) {
+                    closeThemePanel();
+                } else {
+                    openThemePanel();
+                }
+            };
+
+            const storedTheme = getStoredTheme();
+            if (storedTheme && themeProfiles[storedTheme]) {
+                applyTheme(storedTheme, { persist: false });
+            } else {
+                applyTheme(defaultTheme, { persist: false });
+                storeTheme(defaultTheme);
+            }
+
+            $themeButton.on('click', function(event) {
+                event.preventDefault();
+                toggleThemePanel();
+            });
+
+            $themeCloseButtons.on('click', function() {
+                closeThemePanel();
+            });
+
+            $themeOptions.on('click', function() {
+                const themeId = $(this).data('theme');
+                applyTheme(themeId);
+                closeThemePanel();
+            });
+
+            $themeResetButton.on('click', function() {
+                applyTheme(defaultTheme);
+                closeThemePanel();
+            });
+
+            $(document).on('click.themeSettings', function(event) {
+                if (!$themePanel.is(event.target) &&
+                    $themePanel.has(event.target).length === 0 &&
+                    !$themeButton.is(event.target) &&
+                    $themeButton.has(event.target).length === 0) {
+                    closeThemePanel();
+                }
+            });
+
+            $(document).on('keydown.themeSettings', function(event) {
+                if (event.key === 'Escape') {
+                    closeThemePanel();
+                }
+            });
+        }
+
         // ===================================================================
         // 1. FUNÇÕES DE INICIALIZAÇÃO (Estatísticas e Gráficos)
         // ===================================================================
@@ -211,62 +645,83 @@ if (!window.searchAppInitialized) {
                 success: function(data) {
                     const canvasElement = document.getElementById('daily-searches-chart');
                     if (!canvasElement || !data || !data.labels || !data.data) return;
-
-                    // Usa o método oficial do Chart.js para verificar e destruir um gráfico existente
-                    const existingChart = Chart.getChart(canvasElement);
-                    if (existingChart) {
-                        existingChart.destroy();
-                    }
-
-                    // Cria o novo gráfico
-                    new Chart(canvasElement, {
-                        type: 'bar',
-                        data: {
-                            labels: data.labels,
-                            datasets: [{
-                                label: 'Nº de Buscas',
-                                data: data.data,
-                                backgroundColor: 'rgba(46, 125, 50, 0.7)',
-                                borderColor: 'rgba(46, 125, 50, 1)',
-                                borderWidth: 1
-                            }]
-                        },
-                        options: {
-                            scales: {
-                                y: {
-                                    beginAtZero: true,
-                                    ticks: {
-                                        stepSize: 1,
-                                        precision: 0
-                                    }
-                                }
-                            },
-                            plugins: {
-                                legend: {
-                                    display: false
-                                },
-                                tooltip: {
-                                    backgroundColor: 'rgba(46, 125, 50, 0.9)',
-                                    titleFont: {
-                                        size: 14
-                                    },
-                                    bodyFont: {
-                                        size: 13
-                                    },
-                                    callbacks: {
-                                        label: function(context) {
-                                            return context.parsed.y + ' busca(s)';
-                                        }
-                                    }
-                                }
-                            },
-                            responsive: true,
-                            maintainAspectRatio: false
-                        }
-                    });
+                    lastDailyChartData = data;
+                    renderDailyChart(canvasElement, data);
                 },
                 error: function() {
                     $('#chart-placeholder .card-body').html('<p class="text-muted text-center py-5">Não foi possível carregar os dados do gráfico.</p>');
+                }
+            });
+        }
+
+        function renderDailyChart(canvasElement, data) {
+            if (!canvasElement || !data || !data.labels || !data.data) {
+                return;
+            }
+
+            if (dailySearchesChart) {
+                dailySearchesChart.destroy();
+            }
+
+            const barBackground = cssVar('--chart-bar-color', 'rgba(46, 125, 50, 0.7)');
+            const barBorder = cssVar('--chart-border-color', 'rgba(46, 125, 50, 1)');
+            const tooltipBg = cssVar('--chart-tooltip-bg', 'rgba(46, 125, 50, 0.9)');
+            const tooltipText = cssVar('--chart-tooltip-text', '#ffffff');
+
+            dailySearchesChart = new Chart(canvasElement, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Nº de Buscas',
+                        data: data.data,
+                        backgroundColor: barBackground,
+                        borderColor: barBorder,
+                        borderWidth: 1,
+                        hoverBackgroundColor: colorWithAlpha(barBackground, 0.9)
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1,
+                                precision: 0
+                            },
+                            grid: {
+                                color: colorWithAlpha(barBorder, 0.15)
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: colorWithAlpha(barBorder, 0.08)
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: tooltipBg,
+                            titleFont: {
+                                size: 14
+                            },
+                            bodyFont: {
+                                size: 13
+                            },
+                            bodyColor: tooltipText,
+                            titleColor: tooltipText,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.parsed.y + ' busca(s)';
+                                }
+                            }
+                        }
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false
                 }
             });
         }
@@ -316,56 +771,80 @@ if (!window.searchAppInitialized) {
                         filteredColors = ['rgba(200, 200, 200, 0.7)'];
                     }
 
-                    // Usa o método oficial do Chart.js para verificar e destruir um gráfico existente
-                    const existingChart = Chart.getChart(canvasElement);
-                    if (existingChart) {
-                        existingChart.destroy();
-                    }
+                    lastTermsChartData = {
+                        labels: filteredLabels,
+                        data: filteredData
+                    };
 
-                    // Cria o novo gráfico com os dados filtrados
-                    new Chart(canvasElement, {
-                        type: 'doughnut',
-                        data: {
-                            labels: filteredLabels,
-                            datasets: [{
-                                data: filteredData,
-                                backgroundColor: filteredColors,
-                                borderColor: 'white',
-                                borderWidth: 1
-                            }]
-                        },
-                        options: {
-                            plugins: {
-                                legend: {
-                                    position: 'right',
-                                    labels: {
-                                        boxWidth: 12,
-                                        padding: 15
-                                    }
-                                },
-                                tooltip: {
-                                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                                    titleFont: {
-                                        size: 14
-                                    },
-                                    bodyFont: {
-                                        size: 13
-                                    },
-                                    callbacks: {
-                                        label: function(context) {
-                                            return context.label + ': ' + context.parsed + ' busca(s)';
-                                        }
-                                    }
-                                }
-                            },
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            cutout: '65%'
-                        }
-                    });
+                    renderTermsChart(canvasElement, lastTermsChartData);
                 },
                 error: function() {
                     $('#chart-terms-placeholder .card-body').html('<p class="text-muted text-center py-5">Não foi possível carregar os dados dos termos.</p>');
+                }
+            });
+        }
+
+        function renderTermsChart(canvasElement, chartData) {
+            if (!canvasElement || !chartData || !chartData.labels || !chartData.data) {
+                return;
+            }
+
+            if (topTermsChart) {
+                topTermsChart.destroy();
+            }
+
+            const backgroundColors = generateGradientPalette(
+                cssVar('--chart-bar-color', '#2e7d32'),
+                cssVar('--chart-secondary-color', '#ff8f00'),
+                chartData.labels.length,
+                { startAlpha: 0.85, endAlpha: 0.55 }
+            );
+
+            const borderColor = cssVar('--card-bg', '#ffffff');
+            const tooltipBg = cssVar('--chart-tooltip-bg', 'rgba(0, 0, 0, 0.8)');
+            const tooltipText = cssVar('--chart-tooltip-text', '#ffffff');
+
+            topTermsChart = new Chart(canvasElement, {
+                type: 'doughnut',
+                data: {
+                    labels: chartData.labels,
+                    datasets: [{
+                        data: chartData.data,
+                        backgroundColor: backgroundColors,
+                        borderColor,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                boxWidth: 12,
+                                padding: 15,
+                                color: cssVar('--muted-text-color', '#757575')
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: tooltipBg,
+                            titleFont: {
+                                size: 14
+                            },
+                            bodyFont: {
+                                size: 13
+                            },
+                            bodyColor: tooltipText,
+                            titleColor: tooltipText,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ' + context.parsed + ' busca(s)';
+                                }
+                            }
+                        }
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%'
                 }
             });
         }
@@ -374,6 +853,18 @@ if (!window.searchAppInitialized) {
         loadStats();
         loadDailyChart();
         loadTermsChart();
+
+        document.addEventListener('searchpdf:themechange', function() {
+            const dailyCanvas = document.getElementById('daily-searches-chart');
+            if (dailyCanvas && lastDailyChartData) {
+                renderDailyChart(dailyCanvas, lastDailyChartData);
+            }
+
+            const termsCanvas = document.getElementById('top-terms-chart');
+            if (termsCanvas && lastTermsChartData) {
+                renderTermsChart(termsCanvas, lastTermsChartData);
+            }
+        });
 
         // ===================================================================
         // 2. LÓGICA DA ÁRVORE DE ARQUIVOS (VERSÃO FINAL)

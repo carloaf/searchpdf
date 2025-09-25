@@ -116,4 +116,63 @@
     </div>
 
 </div> <!-- Fim do .search-container -->
+
+<button type="button" class="theme-settings-button" id="theme-settings-button" aria-label="Abrir configurações de cores">
+    <i class="fas fa-cog"></i>
+</button>
+
+<div class="theme-settings-panel card shadow" id="theme-settings-panel" aria-hidden="true">
+    <div class="card-header d-flex align-items-center justify-content-between">
+        <div>
+            <i class="fas fa-palette me-2"></i>
+            <span>Personalização de cores</span>
+        </div>
+        <button type="button" class="btn-close" id="theme-settings-close" aria-label="Fechar configurações"></button>
+    </div>
+    <div class="card-body">
+        <p class="text-muted small mb-3">Escolha um perfil de cores para aplicar imediatamente ao painel.</p>
+        <div class="theme-options-list">
+            <button type="button" class="theme-option" data-theme="default" aria-pressed="false">
+                <span class="theme-option__swatch">
+                    <span style="background-color:#2e7d32"></span>
+                    <span style="background-color:#ff8f00"></span>
+                    <span style="background-color:#f5f7fa"></span>
+                </span>
+                <span class="theme-option__label">Verde clássico</span>
+                <span class="theme-option__check"><i class="fas fa-check"></i></span>
+            </button>
+            <button type="button" class="theme-option" data-theme="ocean" aria-pressed="false">
+                <span class="theme-option__swatch">
+                    <span style="background-color:#1e88e5"></span>
+                    <span style="background-color:#29b6f6"></span>
+                    <span style="background-color:#f1f8ff"></span>
+                </span>
+                <span class="theme-option__label">Azul oceano</span>
+                <span class="theme-option__check"><i class="fas fa-check"></i></span>
+            </button>
+            <button type="button" class="theme-option" data-theme="midnight" aria-pressed="false">
+                <span class="theme-option__swatch">
+                    <span style="background-color:#263238"></span>
+                    <span style="background-color:#ff7043"></span>
+                    <span style="background-color:#37474f"></span>
+                </span>
+                <span class="theme-option__label">Noite urbana</span>
+                <span class="theme-option__check"><i class="fas fa-check"></i></span>
+            </button>
+            <button type="button" class="theme-option" data-theme="sunset" aria-pressed="false">
+                <span class="theme-option__swatch">
+                    <span style="background-color:#d84315"></span>
+                    <span style="background-color:#ffb300"></span>
+                    <span style="background-color:#fff8e1"></span>
+                </span>
+                <span class="theme-option__label">Pôr do sol</span>
+                <span class="theme-option__check"><i class="fas fa-check"></i></span>
+            </button>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="theme-settings-close-bottom">Fechar</button>
+            <button type="button" class="btn btn-sm btn-outline-danger" id="theme-reset-button">Restaurar padrão</button>
+        </div>
+    </div>
+</div>
 {% endblock %}

@@ -3,6 +3,141 @@
  * Responsável por carregar e renderizar os gráficos na aplicação SearchPDF
  */
 
+const chartThemeUtils = (() => {
+    const external = window.searchThemeUtils || {};
+
+    const clamp01 = (value) => {
+        const number = Number(value);
+        if (!Number.isFinite(number)) return 0;
+        if (number < 0) return 0;
+        if (number > 1) return 1;
+        return number;
+    };
+
+    const cssVarFallback = (name, fallback = '') => {
+        try {
+            const value = getComputedStyle(document.documentElement).getPropertyValue(name);
+            return value ? value.trim() || fallback : fallback;
+        } catch (error) {
+            return fallback;
+        }
+    };
+
+    const toRgbaString = ({ r, g, b, a }) => {
+        const red = Math.round(Math.min(Math.max(r, 0), 255));
+        const green = Math.round(Math.min(Math.max(g, 0), 255));
+        const blue = Math.round(Math.min(Math.max(b, 0), 255));
+        const alpha = Math.round(clamp01(a) * 1000) / 1000;
+        return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+    };
+
+    const parseColorString = (color) => {
+        if (!color) return null;
+        const normalized = color.trim();
+        if (!normalized) return null;
+
+        if (normalized.startsWith('#')) {
+            let hex = normalized.slice(1);
+            if (hex.length === 3) {
+                hex = hex.split('').map((char) => char + char).join('');
+            }
+            if (hex.length === 6) {
+                const value = parseInt(hex, 16);
+                if (Number.isNaN(value)) return null;
+                return {
+                    r: (value >> 16) & 255,
+                    g: (value >> 8) & 255,
+                    b: value & 255,
+                    a: 1
+                };
+            }
+            if (hex.length === 8) {
+                const value = parseInt(hex, 16);
+                if (Number.isNaN(value)) return null;
+                return {
+                    r: (value >> 24) & 255,
+                    g: (value >> 16) & 255,
+                    b: (value >> 8) & 255,
+                    a: ((value & 255) / 255)
+                };
+            }
+        }
+
+        const rgbaMatch = normalized.match(/rgba?\(([^)]+)\)/i);
+        if (rgbaMatch) {
+            const parts = rgbaMatch[1].split(',').map((part) => part.trim());
+            if (parts.length >= 3) {
+                const r = parseFloat(parts[0]);
+                const g = parseFloat(parts[1]);
+                const b = parseFloat(parts[2]);
+                const a = parts.length >= 4 ? parseFloat(parts[3]) : 1;
+                if ([r, g, b, a].every((component) => !Number.isNaN(component))) {
+                    return { r, g, b, a: clamp01(a) };
+                }
+            }
+        }
+        return null;
+    };
+
+    const colorWithAlpha = (color, alpha) => {
+        const parsed = parseColorString(color);
+        if (!parsed) {
+            return color || toRgbaString({ r: 0, g: 0, b: 0, a: clamp01(alpha) });
+        }
+        return toRgbaString({ ...parsed, a: clamp01(alpha) });
+    };
+
+    const mixColors = (colorA, colorB, weight, alphaOverride = null) => {
+        const parsedA = parseColorString(colorA);
+        const parsedB = parseColorString(colorB);
+        if (!parsedA && !parsedB) {
+            return colorA || colorB || '';
+        }
+        if (!parsedA) {
+            return alphaOverride !== null ? colorWithAlpha(colorB, alphaOverride) : colorB;
+        }
+        if (!parsedB) {
+            return alphaOverride !== null ? colorWithAlpha(colorA, alphaOverride) : colorA;
+        }
+        const w = clamp01(weight);
+        const mixed = {
+            r: parsedA.r * (1 - w) + parsedB.r * w,
+            g: parsedA.g * (1 - w) + parsedB.g * w,
+            b: parsedA.b * (1 - w) + parsedB.b * w,
+            a: alphaOverride !== null ? clamp01(alphaOverride) : (parsedA.a * (1 - w) + parsedB.a * w)
+        };
+        return toRgbaString(mixed);
+    };
+
+    const generateGradientPalette = (startColor, endColor, count, options = {}) => {
+        const total = Math.max(count, 0);
+        if (total === 0) return [];
+        const { startAlpha = 0.85, endAlpha = 0.55 } = options;
+        if (total === 1) {
+            return [mixColors(startColor, endColor, 0, startAlpha)];
+        }
+        const palette = [];
+        for (let index = 0; index < total; index++) {
+            const weight = index / (total - 1);
+            const alpha = startAlpha + (endAlpha - startAlpha) * weight;
+            palette.push(mixColors(startColor, endColor, weight, alpha));
+        }
+        return palette;
+    };
+
+    return {
+        cssVar: external.cssVar || cssVarFallback,
+        colorWithAlpha: external.colorWithAlpha || colorWithAlpha,
+        generateGradientPalette: external.generateGradientPalette || generateGradientPalette,
+        mixColors: external.mixColors || mixColors,
+        parseColorString: external.parseColorString || parseColorString
+    };
+})();
+
+let documentDistributionChart = null;
+let lastDistributionData = null;
+let lastDistributionYear = 'all';
+
 // Função para depuração do DOM dos gráficos (modo silencioso)
 function debugChartContainers() {
     // Função mantida mas com logs desativados para reduzir ruído no console
@@ -38,6 +173,8 @@ function silentError(fn) {
     };
 }
 
+const { cssVar, colorWithAlpha, generateGradientPalette, mixColors } = chartThemeUtils;
+
 // Função para carregar o gráfico de distribuição de documentos
 function loadDocumentDistributionChart() {
     // Verifica se chart-placeholder existe antes de prosseguir
@@ -72,155 +209,190 @@ function loadDocumentDistributionChart() {
                 $('#chart-placeholder').after(chartHtml);
             }
             
-            const canvasElement = document.getElementById('document-distribution-chart');
-            if (!canvasElement || !data || !data.years || !data.data) {
+            if (!data || !Array.isArray(data.years) || !data.data) {
                 return;
             }
-            
-            // Preenche o seletor de ano
+
+            lastDistributionData = data;
+
+            const canvasElement = document.getElementById('document-distribution-chart');
+            if (!canvasElement) {
+                return;
+            }
+
             const yearSelector = $('#year-selector');
+            const previousSelection = lastDistributionYear;
+
             yearSelector.empty();
-            yearSelector.append('<option value="all" selected>Todos os anos</option>');
-            
+            yearSelector.append('<option value="all">Todos os anos</option>');
+
             data.years.forEach(year => {
                 yearSelector.append(`<option value="${year}">${year}</option>`);
             });
-            
-            // Mantém "Todos os anos" como padrão
-            yearSelector.val('all');
-            
-            // Define as cores para cada mês
-            const colorPalette = [
-                'rgba(46, 125, 50, 0.8)',    // Verde escuro
-                'rgba(56, 142, 60, 0.8)',    
-                'rgba(67, 160, 71, 0.8)',    
-                'rgba(76, 175, 80, 0.8)',    
-                'rgba(102, 187, 106, 0.8)',  
-                'rgba(129, 199, 132, 0.8)',  
-                'rgba(165, 214, 167, 0.8)',  
-                'rgba(200, 230, 201, 0.8)',  
-                'rgba(232, 245, 233, 0.8)',  
-                'rgba(220, 237, 200, 0.8)',
-                'rgba(183, 223, 185, 0.8)',
-                'rgba(129, 199, 132, 0.8)'
-            ];
-            
-            // Função para atualizar o gráfico com base no ano selecionado
-            function updateChart(selectedYear) {
-                // Usa o método do Chart.js para destruir um gráfico existente
-                try {
-                    const existingChart = Chart.getChart(canvasElement);
-                    if (existingChart) {
-                        existingChart.destroy();
-                    }
-                } catch (e) {
-                    // Ignora erros ao tentar destruir gráficos
-                }
-                
-                // Prepara os dados com base no ano selecionado
-                let datasets = [];
-                
-                if (selectedYear === 'all') {
-                    // Para todos os anos, cada ano será uma série de dados
-                    data.years.forEach((year, index) => {
-                        const yearData = [];
-                        
-                        // Preenche os dados para cada mês
-                        data.monthOrder.forEach(month => {
-                            yearData.push(data.data[year] && data.data[year][month] ? data.data[year][month] : 0);
-                        });
-                        
-                        datasets.push({
-                            label: `${year}`,
-                            data: yearData,
-                            backgroundColor: `rgba(${index * 30 + 46}, ${index * 20 + 125}, ${index * 10 + 50}, 0.7)`,
-                            borderColor: `rgba(${index * 30 + 46}, ${index * 20 + 125}, ${index * 10 + 50}, 1)`,
-                            borderWidth: 1
-                        });
-                    });
-                } else {
-                    // Para um ano específico, mostra apenas os dados desse ano
-                    const yearData = [];
-                    
-                    // Preenche os dados para cada mês
-                    data.monthOrder.forEach((month, index) => {
-                        yearData.push(data.data[selectedYear] && data.data[selectedYear][month] ? 
-                            data.data[selectedYear][month] : 0);
-                    });
-                    
-                    datasets.push({
-                        label: `Documentos em ${selectedYear}`,
-                        data: yearData,
-                        backgroundColor: colorPalette,
-                        borderColor: colorPalette.map(color => color.replace('0.8', '1')),
-                        borderWidth: 1
-                    });
-                }
-                
-                // Cria o novo gráfico
-                try {
-                    new Chart(canvasElement, {
-                        type: 'bar',  // Bar chart tipo coluna
-                        data: {
-                            labels: data.monthOrder,
-                            datasets: datasets
-                        },
-                        options: {
-                            scales: {
-                                y: {
-                                    beginAtZero: true,
-                                    ticks: {
-                                        precision: 0
-                                    },
-                                    title: {
-                                        display: true,
-                                        text: 'Quantidade de Documentos',
-                                        font: {
-                                            weight: 'bold'
-                                        }
-                                    }
-                                },
-                                x: {
-                                    title: {
-                                        display: true,
-                                        text: 'Mês',
-                                        font: {
-                                            weight: 'bold'
-                                        }
-                                    }
-                                }
-                            },
-                            plugins: {
-                                tooltip: {
-                                    callbacks: {
-                                        title: function(tooltipItems) {
-                                            return data.monthOrder[tooltipItems[0].dataIndex];
-                                        }
-                                    }
-                                }
-                            },
-                            responsive: true,
-                            maintainAspectRatio: false
-                        }
-                    });
-                } catch (e) {
-                    // Ignora erros ao criar o gráfico
-                }
+
+            if (previousSelection !== 'all' && !data.years.includes(previousSelection)) {
+                lastDistributionYear = 'all';
             }
-            
-            // Inicializa o gráfico com a opção "Todos os anos"
-            updateChart('all');
-            
-            // Adiciona evento de mudança ao seletor
-            yearSelector.on('change', function() {
-                updateChart($(this).val());
-            });
+
+            yearSelector.val(lastDistributionYear);
+
+            renderDocumentDistributionChart(canvasElement, data, lastDistributionYear);
+
+            yearSelector.off('change.documentDistribution')
+                .on('change.documentDistribution', function() {
+                    lastDistributionYear = $(this).val() || 'all';
+                    renderDocumentDistributionChart(canvasElement, lastDistributionData, lastDistributionYear);
+                });
         },
         error: function(xhr, status, error) {
             // Erro silencioso na requisição AJAX
         }
     });
 }
+
+function renderDocumentDistributionChart(canvasElement, data, selectedYear = 'all') {
+    if (!canvasElement || !data || !Array.isArray(data.monthOrder)) {
+        return;
+    }
+
+    if (documentDistributionChart) {
+        documentDistributionChart.destroy();
+        documentDistributionChart = null;
+    }
+
+    const baseColor = cssVar('--chart-bar-color', 'rgba(46, 125, 50, 0.75)');
+    const secondaryColor = cssVar('--chart-secondary-color', '#ff8f00');
+    const borderColor = cssVar('--chart-border-color', 'rgba(46, 125, 50, 1)');
+    const tooltipBg = cssVar('--chart-tooltip-bg', 'rgba(46, 125, 50, 0.9)');
+    const tooltipText = cssVar('--chart-tooltip-text', '#ffffff');
+    const axisTickColor = cssVar('--muted-text-color', '#757575');
+    const titleColor = cssVar('--text-primary', '#212121');
+    const gridColorY = colorWithAlpha(borderColor, 0.2);
+    const gridColorX = colorWithAlpha(borderColor, 0.1);
+
+    const datasets = [];
+
+    if (selectedYear === 'all') {
+        const totalYears = Array.isArray(data.years) ? data.years.length : 0;
+        const yearPalette = generateGradientPalette(baseColor, secondaryColor, totalYears || 1, {
+            startAlpha: 0.7,
+            endAlpha: 0.45
+        });
+
+        if (Array.isArray(data.years)) {
+            data.years.forEach((year, index) => {
+                const entries = data.monthOrder.map((month) => {
+                    return data.data[year] && data.data[year][month] ? data.data[year][month] : 0;
+                });
+
+                const yearColor = yearPalette[index] || colorWithAlpha(baseColor, 0.65);
+
+                datasets.push({
+                    label: `${year}`,
+                    data: entries,
+                    backgroundColor: yearColor,
+                    borderColor: colorWithAlpha(yearColor, 0.95),
+                    borderWidth: 1
+                });
+            });
+        }
+    } else {
+        const selectedData = data.data[selectedYear] || {};
+        const monthCount = Array.isArray(data.monthOrder) ? data.monthOrder.length : 0;
+        const backgroundPalette = generateGradientPalette(baseColor, secondaryColor, monthCount || 1, {
+            startAlpha: 0.85,
+            endAlpha: 0.55
+        });
+        const borderPalette = backgroundPalette.map((color) => colorWithAlpha(color, 0.95));
+
+        const entries = data.monthOrder.map((month) => {
+            return selectedData[month] ? selectedData[month] : 0;
+        });
+
+        datasets.push({
+            label: `Documentos em ${selectedYear}`,
+            data: entries,
+            backgroundColor: backgroundPalette,
+            borderColor: borderPalette,
+            borderWidth: 1
+        });
+    }
+
+    documentDistributionChart = new Chart(canvasElement, {
+        type: 'bar',
+        data: {
+            labels: data.monthOrder,
+            datasets
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0,
+                        color: axisTickColor
+                    },
+                    grid: {
+                        color: gridColorY
+                    },
+                    title: {
+                        display: true,
+                        text: 'Quantidade de Documentos',
+                        color: titleColor,
+                        font: {
+                            weight: 'bold'
+                        }
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: axisTickColor
+                    },
+                    grid: {
+                        color: gridColorX
+                    },
+                    title: {
+                        display: true,
+                        text: 'Mês',
+                        color: titleColor,
+                        font: {
+                            weight: 'bold'
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    labels: {
+                        color: axisTickColor
+                    }
+                },
+                tooltip: {
+                    backgroundColor: tooltipBg,
+                    bodyColor: tooltipText,
+                    titleColor: tooltipText,
+                    callbacks: {
+                        title: function(tooltipItems) {
+                            if (!tooltipItems || !tooltipItems.length) {
+                                return '';
+                            }
+                            return data.monthOrder[tooltipItems[0].dataIndex];
+                        }
+                    }
+                }
+            },
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+}
+
+document.addEventListener('searchpdf:themechange', function() {
+    const canvasElement = document.getElementById('document-distribution-chart');
+    if (canvasElement && lastDistributionData) {
+        renderDocumentDistributionChart(canvasElement, lastDistributionData, lastDistributionYear);
+    }
+});
 
 // Carrega todos os gráficos quando a página estiver pronta
 $(document).ready(function() {
