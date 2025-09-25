@@ -395,6 +395,40 @@ if (!window.searchAppInitialized) {
             $(this).closest('li').find('input[type="checkbox"]').prop('checked', isChecked);
         });
 
+        function triggerFileDownload($container) {
+            const token = $container.data('download-token');
+            const route = ($container.data('download-route') || '').toString().replace(/\/$/, '');
+
+            if (token && route) {
+                const downloadUrl = route.length ? `${route}/${encodeURIComponent(token)}` : encodeURIComponent(token);
+                window.open(downloadUrl, '_blank', 'noopener');
+                return true;
+            }
+
+            const fallbackLink = $container.find('.file-name').attr('href');
+            if (fallbackLink && fallbackLink !== '#') {
+                window.open(fallbackLink, '_blank', 'noopener');
+                return true;
+            }
+
+            return false;
+        }
+
+        $('.file-tree').on('click', '.file-item .file-name', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            triggerFileDownload($(this).closest('.file-item'));
+        });
+
+        $('.file-tree').on('keydown', '.file-item .file-name', function(event) {
+            if (event.key !== 'Enter' && event.key !== ' ') {
+                return;
+            }
+            event.preventDefault();
+            event.stopPropagation();
+            triggerFileDownload($(this).closest('.file-item'));
+        });
+
         // ===================================================================
         // 3. FUNÇÃO DE BUSCA PRINCIPAL (AJAX)
         // ===================================================================

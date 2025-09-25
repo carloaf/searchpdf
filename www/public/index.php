@@ -10,6 +10,7 @@
  */
 
 use Slim\Factory\AppFactory;
+use Slim\Psr7\Stream;
 use Slim\Views\Twig;
 use Slim\Views\TwigMiddleware;
 
@@ -50,7 +51,13 @@ $app->get('/iframe', function ($request, $response) {
     // Chama o novo método para gerar o HTML da árvore de arquivos e a contagem
     $treeResult = \Model\FilesModel::buildFileTreeHtml(
         $settings['directory_files'], 
-        $settings['allowed_extensions']
+        $settings['allowed_extensions'],
+        [
+            'baseUrl' => $settings['url_base'] ?? '',
+            'rootDir' => $settings['directory_files'],
+            'downloadSecret' => $settings['download_secret'] ?? null,
+            'downloadRoute' => $settings['download_route'] ?? 'download',
+        ]
     );
     
     // Extrai o HTML do resultado
@@ -340,6 +347,67 @@ $app->get('/files/list/{ano}', function ($request, $response, $args) {
 // --- ROTAS PARA NOVAS ESTATÍSTICAS ---
 $app->get('/stats/top-searches', [\Controller\StatsController::class, 'getTopSearchTerms']);
 $app->get('/stats/document-distribution', [\Controller\StatsController::class, 'getDocumentDistribution']);
+
+// Rota responsável por entregar arquivos via token sem revelar caminhos reais
+$app->get('/download/{token}', function ($request, $response, $args) {
+    $settings = $request->getAttribute('settings');
+    $secret = $settings['download_secret'] ?? null;
+    $baseDirectory = $settings['directory_files'] ?? null;
+
+    if (empty($secret) || empty($baseDirectory)) {
+        return $response->withStatus(404);
+    }
+
+    $token = $args['token'] ?? '';
+    if ($token === '') {
+        return $response->withStatus(404);
+    }
+
+    $relativePath = \Model\DownloadToken::decode($token, $secret);
+    if ($relativePath === null) {
+        return $response->withStatus(404);
+    }
+
+    $rootRealPath = realpath($baseDirectory);
+    if ($rootRealPath === false) {
+        return $response->withStatus(404);
+    }
+
+    $fullPath = $rootRealPath . DIRECTORY_SEPARATOR . $relativePath;
+    $fileRealPath = realpath($fullPath);
+    if ($fileRealPath === false) {
+        return $response->withStatus(404);
+    }
+
+    $normalizedRoot = rtrim($rootRealPath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+    if (!str_starts_with($fileRealPath, $normalizedRoot)) {
+        return $response->withStatus(403);
+    }
+
+    if (!is_file($fileRealPath) || !is_readable($fileRealPath)) {
+        return $response->withStatus(404);
+    }
+
+    $handle = fopen($fileRealPath, 'rb');
+    if ($handle === false) {
+        return $response->withStatus(500);
+    }
+
+    $stream = new Stream($handle);
+    $mimeType = mime_content_type($fileRealPath) ?: 'application/octet-stream';
+    $filename = basename($fileRealPath);
+
+    $response = $response
+        ->withHeader('Content-Type', $mimeType)
+        ->withHeader('Content-Disposition', 'attachment; filename="' . addslashes($filename) . '"');
+
+    $size = filesize($fileRealPath);
+    if ($size !== false) {
+        $response = $response->withHeader('Content-Length', (string) $size);
+    }
+
+    return $response->withBody($stream);
+});
 
 // Rotas AJAX para a funcionalidade de busca
 $app->post('/searchFile', [\Controller\AjaxController::class, 'searchFile']);

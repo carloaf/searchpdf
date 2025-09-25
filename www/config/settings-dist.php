@@ -52,6 +52,9 @@ $settings['url_base'] = 'http://localhost:8888/pesquisadocof/public';
  */ 
 $settings['directory_files'] = '/mnt/debian10/sistemas2/RadFrame-lib/projects/pesquisadocof/public/files';
 
+$settings['download_secret'] = getenv('SEARCHPDF_DOWNLOAD_SECRET') ?: 'altere-esta-chave';
+$settings['download_route'] = 'download';
+
 
 
 /**

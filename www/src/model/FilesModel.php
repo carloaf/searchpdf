@@ -14,8 +14,25 @@ class FilesModel
     /**
      * Gera a estrutura de árvore de arquivos em HTML, com contagem e ordenação customizada.
      */
-    public static function buildFileTreeHtml($dir, $allowed_extensions)
+    public static function buildFileTreeHtml($dir, $allowed_extensions, array $options = [])
     {
+        $dir = rtrim($dir, '/');
+
+        $options['rootDir'] = $options['rootDir'] ?? $dir;
+        $options['publicRoot'] = $options['publicRoot'] ?? rtrim(dirname($options['rootDir']), '/');
+
+        if (!isset($options['publicPrefix'])) {
+            $relativeRoot = str_replace($options['publicRoot'], '', $options['rootDir']);
+            $options['publicPrefix'] = trim($relativeRoot, '/');
+        }
+
+        $rootDir = rtrim($options['rootDir'], '/');
+        $publicRoot = rtrim($options['publicRoot'], '/');
+        $publicPrefix = $options['publicPrefix'];
+        $baseUrl = isset($options['baseUrl']) ? rtrim($options['baseUrl'], '/') : '';
+        $downloadSecret = $options['downloadSecret'] ?? null;
+        $downloadRoute = trim($options['downloadRoute'] ?? 'download', '/');
+
         $html = '<ul class="list-unstyled file-tree">';
         $items = is_dir($dir) ? scandir($dir) : [];
         
@@ -75,7 +92,7 @@ class FilesModel
         foreach ($dirs as $folder) {
             $path = "$dir/$folder";
             
-            $subTreeResult = self::buildFileTreeHtml($path, $allowed_extensions);
+            $subTreeResult = self::buildFileTreeHtml($path, $allowed_extensions, $options);
             $subTreeHtml = $subTreeResult['html'];
             $subTreeCount = $subTreeResult['count'];
             
@@ -108,11 +125,46 @@ class FilesModel
         foreach ($files as $file) {
             $path = "$dir/$file";
             $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+
+            $relativePath = $path;
+            $rootPrefix = $rootDir . '/';
+            if (str_starts_with($path, $rootPrefix)) {
+                $relativePath = substr($path, strlen($rootPrefix));
+            }
+            $relativePath = ltrim($relativePath, '/');
+
+            $publicSegments = [];
+            if ($publicPrefix !== '') {
+                $publicSegments[] = $publicPrefix;
+            }
+            if ($relativePath !== '') {
+                $publicSegments[] = $relativePath;
+            }
+            $publicRelativePath = implode('/', $publicSegments);
+
+            $downloadToken = null;
+            if (!empty($downloadSecret) && $relativePath !== '') {
+                $downloadToken = DownloadToken::encode($relativePath, $downloadSecret);
+            }
+
+            $linkHref = '#';
+            $linkExtraAttrs = ' role="button" tabindex="0"';
+            $downloadAttributes = '';
+
+            if ($downloadToken) {
+                $downloadAttributes = ' data-download-token="' . htmlspecialchars($downloadToken) . '" data-download-route="' . htmlspecialchars($downloadRoute) . '"';
+            } else {
+                $linkExtraAttrs = ' target="_blank" rel="noopener"';
+                $linkHref = $baseUrl !== ''
+                    ? $baseUrl . '/' . ltrim($publicRelativePath, '/')
+                    : '/' . ltrim($publicRelativePath, '/');
+            }
+
             $html .= '<li>';
-            $html .= '  <div class="file-item d-flex align-items-center" data-ext="' . $ext . '">';
+            $html .= '  <div class="file-item d-flex align-items-center" data-ext="' . $ext . '"' . $downloadAttributes . '>';
             $html .= '    <input type="checkbox" class="form-check-input me-2 file-check" data-path="' . htmlspecialchars($path) . '">';
             $html .= '    <i class="fas fa-file-pdf file-icon"></i>';
-            $html .= '    <span class="file-name">' . htmlspecialchars($file) . '</span>';
+            $html .= '    <a href="' . htmlspecialchars($linkHref) . '" class="file-name"' . $linkExtraAttrs . ' aria-label="Baixar ' . htmlspecialchars($file) . '">' . htmlspecialchars($file) . '</a>';
             $html .= '  </div>';
             $html .= '</li>';
         }

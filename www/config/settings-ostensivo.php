@@ -51,6 +51,8 @@ $settings['url_base'] = 'http://localhost:8080';
  * @uses Obrigatoriamente os arquivos devem ser colocados no diretório public/files
  */ 
 $settings['directory_files'] = '/var/www/searchpdf/public/files';
+$settings['download_secret'] = getenv('SEARCHPDF_DOWNLOAD_SECRET') ?: 'altere-esta-chave';
+$settings['download_route'] = 'download';
 
 
 

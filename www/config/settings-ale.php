@@ -51,6 +51,8 @@ $settings['url_base'] = 'http://localhost';
  * @uses Obrigatoriamente os arquivos devem ser colocados no diretório public/files
  */ 
 $settings['directory_files'] = '/var/www/intranet7/oddocs/public/files';
+$settings['download_secret'] = getenv('SEARCHPDF_DOWNLOAD_SECRET') ?: 'altere-esta-chave';
+$settings['download_route'] = 'download';
 
 
 

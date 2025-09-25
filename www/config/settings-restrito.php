@@ -51,6 +51,8 @@ ATENÇÃO: MANIPULE ESTE SCRIPT COM ENCODE UTF-8 (NÃO UTILIZE ISO-8856-1)
  * @uses Obrigatoriamente os arquivos devem ser colocados no diretório public/files
  */ 
 $settings['directory_files'] = '/var/www/searchpdf/public/files';
+$settings['download_secret'] = getenv('SEARCHPDF_DOWNLOAD_SECRET') ?: 'altere-esta-chave';
+$settings['download_route'] = 'download';
 
 
 

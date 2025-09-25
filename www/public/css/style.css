@@ -262,6 +262,21 @@ body {
     max-width: 80%;
 }
 
+.file-tree .file-name {
+    color: inherit;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    min-width: 0;
+    cursor: pointer;
+}
+
+.file-tree .file-name:hover,
+.file-tree .file-name:focus {
+    text-decoration: underline;
+    color: var(--primary-dark);
+}
+
 /* Adiciona cores diferentes para tipos de arquivos */
 .file-tree .file-item[data-ext="pdf"] .file-name {
     color: var(--primary-color);

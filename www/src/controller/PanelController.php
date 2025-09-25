@@ -24,7 +24,13 @@ class PanelController
         // Chama o novo método para gerar o HTML da árvore de arquivos e a contagem
         $treeResult = FilesModel::buildFileTreeHtml(
             $settings['directory_files'], 
-            $settings['allowed_extensions']
+            $settings['allowed_extensions'],
+            [
+                'baseUrl' => $settings['url_base'] ?? '',
+                'rootDir' => $settings['directory_files'],
+                'downloadSecret' => $settings['download_secret'] ?? null,
+                'downloadRoute' => $settings['download_route'] ?? 'download',
+            ]
         );
         
         // Extrai o HTML do resultado
