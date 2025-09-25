@@ -8,7 +8,20 @@ $dbHost = getenv('DB_HOST') ?: 'db';
 $dbName = getenv('DB_NAME') ?: 'searchpdf_db';
 $dbUser = getenv('DB_USER') ?: 'searchpdf_user';
 $dbPass = getenv('DB_PASS') ?: 'user_password';
-$uploadsDir = '/var/www/html/public/uploads';
+
+// Permite configurar o diretório de uploads via variável de ambiente.
+// Fallback para caminhos compatíveis com execução fora do container (ex.: cron local).
+$uploadsDir = getenv('UPLOADS_DIR');
+if (!$uploadsDir) {
+    $projectRoot = dirname(__FILE__);
+    // Quando executado dentro do container o caminho tradicional é /var/www/html/public/uploads
+    $defaultContainerPath = '/var/www/html/public/uploads';
+    if (is_dir($defaultContainerPath)) {
+        $uploadsDir = $defaultContainerPath;
+    } else {
+        $uploadsDir = realpath($projectRoot . '/public/uploads') ?: $projectRoot . '/public/uploads';
+    }
+}
 
 /**
  * Função recursiva para buscar todos os arquivos PDF em um diretório e suas subpastas.

@@ -1,0 +1,6 @@
+# Cron job para indexação automática do SearchPDF
+# Executa de segunda a sexta-feira, das 08h às 18h, a cada 2 horas
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
+
+0 8-18/2 * * 1-5 /home/augusto/workspace/searchpdf/scripts/indexacao_automatica.sh

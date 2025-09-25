@@ -75,12 +75,6 @@ Uma cópia de exemplo é fornecida como `www/config/settings-dist.php`.
 
 ## Estrutura de Diretórios
 
-- `/www` - Código-fonte da aplicação
-- `/www/src` - Arquivos do modelo MVC
-- `/www/public` - Arquivos públicos acessíveis via web
-- `/www/config` - Arquivos de configuração
-- `/uploads` - Diretório para upload de arquivos
-- `/mysql` - Dados persistentes do MySQL
 
 ## Licença
 
@@ -90,6 +84,43 @@ Este projeto está licenciado sob a licença MIT - veja o arquivo LICENSE para d
 
 Desenvolvido inicialmente por Augusto <carloafernandes@gmail.com>.
 
----
 
 **Nota:** Este software foi desenvolvido para fins educacionais e pode ser adaptado para uso em ambientes de produção conforme necessário.
+
+
+## Cron de indexação automática
+
+Para manter a base de dados atualizada com os PDFs enviados para `www/public/uploads`, foi adicionada uma rotina automatizada de indexação.
+
+### Scripts disponíveis
+
+- `scripts/indexacao_automatica.sh`: shell script chamado pelo cron. Exporta as variáveis necessárias e executa `php www/indexer.php`, registrando logs em `logs/`.
+- `scripts/crontab_indexador`: template com a configuração do cron (segunda a sexta-feira, das 08h às 18h, a cada 2 horas).
+- `scripts/instalar_cron.sh`: instala/atualiza o cron usando o template acima.
+
+### Instalação do cron
+
+1. Garanta que o PHP e as dependências (`pdftotext`, `pdfinfo`, etc.) estão no PATH.
+2. Torne o instalador executável e execute-o a partir da raiz do projeto:
+
+```bash
+chmod +x scripts/instalar_cron.sh
+./scripts/instalar_cron.sh
+```
+
+O script criará (ou atualizará) a entrada do cron do usuário atual com a seguinte agenda:
+
+```
+0 8-18/2 * * 1-5 /home/augusto/workspace/searchpdf/scripts/indexacao_automatica.sh
+```
+
+### Logs
+
+- `logs/cron_indexador.log`: mensagens de execução do shell script.
+- `logs/indexador_output.log`: saída completa do `indexer.php` em cada execução.
+
+### Personalizações
+
+- Para alterar o diretório de uploads, defina a variável de ambiente `UPLOADS_DIR` antes de executar o script ou ajuste `indexer.php`.
+- Se precisar apontar para um binário PHP específico, defina `SEARCHPDF_PHP_BIN` com o caminho completo.
+- Quando o PHP rodar dentro de um container Docker, informe o nome do container via `SEARCHPDF_PHP_CONTAINER` (padrão `searchpdf_app`).
