@@ -12,7 +12,12 @@
     <div class="search-stats text-muted mb-4">
         <span><i class="fas fa-history me-1"></i> Total de Buscas: <strong id="stats-total">...</strong></span>
         <span><i class="fas fa-calendar-week me-1"></i> Buscas na Última Semana: <strong id="stats-week">...</strong></span>
-        <span><i class="fas fa-file-pdf me-1"></i> Último Arquivo Indexado: <strong id="stats-last-file">...</strong></span>
+        <span>
+            <i class="fas fa-file-pdf me-1"></i> Último Arquivo Indexado: <strong id="stats-last-file">...</strong>
+            <button type="button" class="btn btn-sm btn-reindex ms-2" id="btn-reindex" title="Executar indexação de novos arquivos">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </span>
     </div>
 
     <!-- Barra de Busca -->
@@ -27,7 +32,7 @@
 
     <!-- Opções de Busca (Colapsável) -->
     <div class="collapse" id="search-options">
-        <div class="card card-body bg-light border-0 mb-4">
+        <div class="card card-body search-options-card border-0 mb-4">
             <div class="row">
                 <div class="col-md-6">
                     <strong>Tipo de Busca:</strong>

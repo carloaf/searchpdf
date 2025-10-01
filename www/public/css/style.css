@@ -18,8 +18,8 @@
     --success-color: #43a047; /* Verde para sucesso */
     --warning-color: #ffa000; /* Âmbar para avisos */
     --error-color: #d32f2f; /* Vermelho para erros */
-    --tree-connector-color: rgba(46, 125, 50, 0.15);
-    --tree-connector-hover-color: rgba(46, 125, 50, 0.3);
+    --tree-connector-color: rgba(46, 125, 50, 0.3);
+    --tree-connector-hover-color: rgba(46, 125, 50, 0.5);
     --tree-active-bg: rgba(46, 125, 50, 0.08);
     --tree-hover-bg: rgba(46, 125, 50, 0.12);
     --tree-hover-text: #2e7d32;
@@ -30,7 +30,7 @@
     --tree-scroll-track: rgba(46, 125, 50, 0.05);
     --tree-scroll-thumb: rgba(46, 125, 50, 0.2);
     --tree-scroll-thumb-hover: rgba(46, 125, 50, 0.4);
-    --file-tree-bg: #ffffff;
+    --file-tree-bg: #f5f7fa;
     --muted-text-color: #757575;
     --lead-text-color: #5f6a73;
     --stats-strong-color: #2e7d32;
@@ -87,6 +87,21 @@ body {
     background-color: var(--primary-color);
     border-color: var(--primary-dark);
 }
+
+/* --- Opções de Busca (Colapsável) --- */
+.search-options-card {
+    background-color: var(--card-alt-bg);
+    color: var(--text-primary);
+}
+
+.search-options-card strong {
+    color: var(--text-primary);
+}
+
+.search-options-card .form-check-label {
+    color: var(--text-secondary);
+}
+
 /* --- Árvore de Arquivos --- */
 #file-tree-card {
     border-radius: 0.5rem;
@@ -187,25 +202,42 @@ body[data-theme="midnight"] #file-tree-card {
     transition: all 0.2s ease;
     font-size: 0.95rem;
     position: relative;
+    color: var(--text-primary);
+    background-color: #ffffff;
+    margin-bottom: 0.15rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* Tema escuro usa fundo do card ao invés de branco puro */
+body[data-theme="midnight"] .file-tree .folder-item,
+body[data-theme="midnight"] .file-tree .file-item {
+    background-color: var(--card-bg);
+}
+
+body[data-theme="midnight"] .file-tree .folder-item:hover,
+body[data-theme="midnight"] .file-tree .file-item:hover {
+    background-color: var(--tree-hover-bg);
+}
+
+body[data-theme="midnight"] .file-tree .folder-item:not(.collapsed) {
+    background-color: var(--tree-active-bg);
 }
 
 .file-tree .folder-item:hover, .file-tree .file-item:hover {
     background-color: var(--tree-hover-bg);
-    color: var(--tree-hover-text);
     border-radius: 4px;
     transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    transform: translateX(2px);
 }
 
 /* Estilo especial para pasta aberta */
 .file-tree .folder-item:not(.collapsed) {
     background-color: var(--tree-active-bg);
-    border-left: 2px solid var(--tree-active-border);
-    padding-left: calc(0.7rem - 2px); /* Compensa a borda */
+    border-left: 3px solid var(--tree-active-border);
+    padding-left: calc(0.7rem - 3px); /* Compensa a borda */
     font-weight: 500;
-}
-
-body[data-theme="midnight"] .file-tree .folder-item:not(.collapsed) .folder-name {
-    color: var(--accent-color);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
 }
 
 .file-tree .folder-toggle {
@@ -245,6 +277,7 @@ body[data-theme="midnight"] .file-tree .folder-item:not(.collapsed) .folder-name
     align-items: center;
     transition: color 0.2s ease;
     font-weight: 500;
+    color: var(--text-primary);
 }
 
 .file-tree label:hover {
@@ -301,6 +334,7 @@ body[data-theme="midnight"] .file-tree .folder-item:not(.collapsed) .folder-name
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 80%;
+    color: var(--text-primary);
 }
 
 .file-tree .file-name {
@@ -469,8 +503,13 @@ body[data-theme="midnight"] .file-tree .folder-item:not(.collapsed) .folder-name
     margin: 0;
     padding: 0;
 }
-.d-flex {
-    background-color: #ebeff3; /* Fundo cinza claro */
+
+/* Cabeçalho do resultado de busca - adaptado para temas */
+#search-results-container .result-item .d-flex {
+    background-color: var(--card-alt-bg);
+    color: var(--text-primary);
+    padding: 0.5rem;
+    border-radius: 0.25rem;
 }
 
 #search-results-container .result-item {
@@ -597,6 +636,52 @@ body[data-theme="midnight"] .file-tree .folder-item:not(.collapsed) .folder-name
     font-weight: 500;
 }
 
+/* Botão de reindexação ao lado das estatísticas */
+#btn-reindex,
+.btn-reindex {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.85rem;
+    line-height: 1;
+    vertical-align: middle;
+    transition: all 0.3s ease;
+    background-color: var(--primary-color);
+    border: 1px solid var(--primary-dark);
+    color: #ffffff;
+    border-radius: 0.25rem;
+    cursor: pointer;
+}
+
+#btn-reindex:hover:not(:disabled),
+.btn-reindex:hover:not(:disabled) {
+    background-color: var(--primary-light);
+    border-color: var(--primary-color);
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px var(--tree-shadow);
+}
+
+#btn-reindex:disabled,
+.btn-reindex:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+#btn-reindex i.fa-spin {
+    animation: fa-spin 1s infinite linear;
+}
+
+/* Estados de feedback do botão */
+#btn-reindex.btn-reindex-success,
+.btn-reindex.btn-reindex-success {
+    background-color: var(--success-color);
+    border-color: var(--success-color);
+}
+
+#btn-reindex.btn-reindex-error,
+.btn-reindex.btn-reindex-error {
+    background-color: var(--error-color);
+    border-color: var(--error-color);
+}
+
 /* Remove a barra vertical que estava no HTML, pois o 'gap' já faz a separação */
 .search-stats .mx-3 {
     display: none;
@@ -638,6 +723,38 @@ body[data-theme="midnight"] .file-tree .folder-item:not(.collapsed) .folder-name
     position: relative;
     height: 250px; /* Altura reduzida para gráficos empilhados */
     margin-top: 1rem;
+}
+
+/* Estilo para o seletor de ano */
+#year-selector {
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+}
+
+/* Seta branca no tema escuro */
+body[data-theme="midnight"] #year-selector {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+    padding-right: 2.5rem;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+#year-selector:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(var(--primary-color), 0.25);
+}
+
+#year-selector option {
+    background-color: var(--card-bg);
+    color: var(--text-primary);
 }
 
 /* 

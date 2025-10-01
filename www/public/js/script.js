@@ -175,8 +175,8 @@ if (!window.searchAppInitialized) {
                         '--success-color': '#43a047',
                         '--warning-color': '#ffa000',
                         '--error-color': '#d32f2f',
-                        '--tree-connector-color': 'rgba(46, 125, 50, 0.15)',
-                        '--tree-connector-hover-color': 'rgba(46, 125, 50, 0.3)',
+                        '--tree-connector-color': 'rgba(46, 125, 50, 0.3)',
+                        '--tree-connector-hover-color': 'rgba(46, 125, 50, 0.5)',
                         '--tree-active-bg': 'rgba(46, 125, 50, 0.08)',
                         '--tree-hover-bg': 'rgba(46, 125, 50, 0.12)',
                         '--tree-hover-text': '#2e7d32',
@@ -187,7 +187,7 @@ if (!window.searchAppInitialized) {
                         '--tree-scroll-track': 'rgba(46, 125, 50, 0.05)',
                         '--tree-scroll-thumb': 'rgba(46, 125, 50, 0.2)',
                         '--tree-scroll-thumb-hover': 'rgba(46, 125, 50, 0.4)',
-                        '--file-tree-bg': '#ffffff',
+                        '--file-tree-bg': '#f5f7fa',
                         '--muted-text-color': '#757575',
                         '--lead-text-color': '#5f6a73',
                         '--stats-strong-color': '#2e7d32',
@@ -216,8 +216,8 @@ if (!window.searchAppInitialized) {
                         '--success-color': '#2e7d32',
                         '--warning-color': '#ffb300',
                         '--error-color': '#d84315',
-                        '--tree-connector-color': 'rgba(30, 136, 229, 0.2)',
-                        '--tree-connector-hover-color': 'rgba(30, 136, 229, 0.35)',
+                        '--tree-connector-color': 'rgba(30, 136, 229, 0.35)',
+                        '--tree-connector-hover-color': 'rgba(30, 136, 229, 0.55)',
                         '--tree-active-bg': 'rgba(30, 136, 229, 0.12)',
                         '--tree-hover-bg': 'rgba(30, 136, 229, 0.08)',
                         '--tree-hover-text': '#0d47a1',
@@ -228,7 +228,7 @@ if (!window.searchAppInitialized) {
                         '--tree-scroll-track': 'rgba(30, 136, 229, 0.08)',
                         '--tree-scroll-thumb': 'rgba(30, 136, 229, 0.25)',
                         '--tree-scroll-thumb-hover': 'rgba(30, 136, 229, 0.4)',
-                        '--file-tree-bg': '#ffffff',
+                        '--file-tree-bg': '#f1f8ff',
                         '--muted-text-color': '#546e7a',
                         '--lead-text-color': '#3b4f5c',
                         '--stats-strong-color': '#1e88e5',
@@ -257,8 +257,8 @@ if (!window.searchAppInitialized) {
                         '--success-color': '#26a69a',
                         '--warning-color': '#ffb74d',
                         '--error-color': '#ef5350',
-                        '--tree-connector-color': 'rgba(236, 239, 241, 0.12)',
-                        '--tree-connector-hover-color': 'rgba(236, 239, 241, 0.25)',
+                        '--tree-connector-color': 'rgba(236, 239, 241, 0.25)',
+                        '--tree-connector-hover-color': 'rgba(236, 239, 241, 0.45)',
                         '--tree-active-bg': 'rgba(236, 239, 241, 0.08)',
                         '--tree-hover-bg': 'rgba(236, 239, 241, 0.06)',
                         '--tree-hover-text': '#ffb74d',
@@ -298,8 +298,8 @@ if (!window.searchAppInitialized) {
                         '--success-color': '#8bc34a',
                         '--warning-color': '#fb8c00',
                         '--error-color': '#d84315',
-                        '--tree-connector-color': 'rgba(239, 108, 0, 0.2)',
-                        '--tree-connector-hover-color': 'rgba(239, 108, 0, 0.35)',
+                        '--tree-connector-color': 'rgba(239, 108, 0, 0.35)',
+                        '--tree-connector-hover-color': 'rgba(239, 108, 0, 0.55)',
                         '--tree-active-bg': 'rgba(239, 108, 0, 0.12)',
                         '--tree-hover-bg': 'rgba(239, 108, 0, 0.08)',
                         '--tree-hover-text': '#bf360c',
@@ -1010,6 +1010,71 @@ if (!window.searchAppInitialized) {
                 e.preventDefault();
                 $('#btn-search').click();
             }
+        });
+
+        // Evento para acionar indexação manual
+        $('#btn-reindex').on('click', function() {
+            const $btn = $(this);
+            const $icon = $btn.find('i');
+            
+            // Desabilita o botão e mostra feedback visual
+            $btn.prop('disabled', true);
+            $icon.addClass('fa-spin');
+            $btn.attr('title', 'Indexando...');
+            
+            $.ajax({
+                url: 'run-indexer.php',
+                method: 'POST',
+                timeout: 300000, // 5 minutos
+                success: function(response) {
+                    const data = typeof response === 'string' ? JSON.parse(response) : response;
+                    
+                    if (data.success) {
+                        // Mostra feedback de sucesso
+                        $icon.removeClass('fa-sync-alt fa-spin').addClass('fa-check');
+                        $btn.addClass('btn-reindex-success');
+                        $btn.attr('title', data.message);
+                        
+                        // Atualiza as estatísticas
+                        loadStats();
+                        
+                        // Restaura o botão após 3 segundos
+                        setTimeout(function() {
+                            $icon.removeClass('fa-check').addClass('fa-sync-alt');
+                            $btn.removeClass('btn-reindex-success');
+                            $btn.attr('title', 'Executar indexação de novos arquivos');
+                            $btn.prop('disabled', false);
+                        }, 3000);
+                    } else {
+                        // Mostra erro
+                        $icon.removeClass('fa-sync-alt fa-spin').addClass('fa-times');
+                        $btn.addClass('btn-reindex-error');
+                        $btn.attr('title', data.message || 'Erro na indexação');
+                        
+                        setTimeout(function() {
+                            $icon.removeClass('fa-times').addClass('fa-sync-alt');
+                            $btn.removeClass('btn-reindex-error');
+                            $btn.attr('title', 'Executar indexação de novos arquivos');
+                            $btn.prop('disabled', false);
+                        }, 3000);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Erro na indexação:', error);
+                    
+                    // Mostra erro
+                    $icon.removeClass('fa-sync-alt fa-spin').addClass('fa-times');
+                    $btn.addClass('btn-reindex-error');
+                    $btn.attr('title', 'Erro ao executar indexação');
+                    
+                    setTimeout(function() {
+                        $icon.removeClass('fa-times').addClass('fa-sync-alt');
+                        $btn.removeClass('btn-reindex-error');
+                        $btn.attr('title', 'Executar indexação de novos arquivos');
+                        $btn.prop('disabled', false);
+                    }, 3000);
+                }
+            });
         });
 
         // Inicializa o gráfico de distribuição após a página carregar
