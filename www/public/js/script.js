@@ -443,7 +443,7 @@ if (!window.searchAppInitialized) {
         // ===================================================================
 
         // Constante com o maior número atual - definido manualmente
-        const MAIOR_NUMERO_ATUAL = 135;
+        const MAIOR_NUMERO_ATUAL = 188;
         
         // Função para obter o maior número O_XXX_ dos arquivos do ano atual
         function getMaiorNumeroDocumentoAnoAtual() {
@@ -975,7 +975,7 @@ if (!window.searchAppInitialized) {
                             htmlResult += '<div class="list-group-item result-item">';
                             htmlResult += '  <div class="d-flex w-100 justify-content-between align-items-center mb-2">';
                             htmlResult += '    <h5 class="mb-0 result-title">' + item.filename + '</h5>';
-                            htmlResult += '    <a href="' + item.path_file + '" target="_blank" class="btn btn-sm btn-outline-primary ms-3">Abrir PDF</a>';
+                            htmlResult += '    <a href="' + item.path_file + '" target="_blank" class="btn btn-sm btn-outline-primary ms-3">Abrir</a>';
                             htmlResult += '  </div>';
                             htmlResult += '  <p class="mb-1 result-snippet">' + item.text + '</p>';
                             htmlResult += '</div>';

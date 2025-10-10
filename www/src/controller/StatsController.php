@@ -78,13 +78,14 @@ class StatsController
             $pdo = new \PDO("mysql:host=$dbHost;dbname=$dbName;charset=utf8mb4", $dbUser, $dbPass);
             $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
             
-            // Consulta SQL mais abrangente para capturar documentos em vários formatos de caminho
+            // Consulta SQL mais abrangente para capturar documentos únicos por nome de arquivo
             $stmt = $pdo->prepare("
                 SELECT 
                     file_path,
+                    SUBSTRING_INDEX(file_path, '/', -1) as filename,
                     COUNT(*) as document_count
                 FROM pdf_index 
-                GROUP BY file_path
+                GROUP BY SUBSTRING_INDEX(file_path, '/', -1)
             ");
             $stmt->execute();
             $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -99,32 +100,30 @@ class StatsController
             
             foreach ($results as $row) {
                 $filePath = $row['file_path'];
+                $filename = $row['filename'];
                 $count = (int)$row['document_count'];
                 
-                // Tenta extrair ano e mês do caminho do arquivo
-                if (preg_match('#/(\d{4})/(BI|BA)/([^/]+)/#', $filePath, $matches)) {
+                $year = null;
+                $monthName = null;
+                
+                // Padrão 1: /uploads/BI YYYY/Mês/ (prioridade máxima)
+                if (preg_match('#/BI\s+(\d{4})/([^/]+)/#', $filePath, $matches)) {
                     $year = $matches[1];
-                    $monthName = self::normalizeMonthName($matches[3]);
-                    
-                    if (!in_array($year, $years)) {
-                        $years[] = $year;
-                    }
-                    
-                    if (!isset($dataByYear[$year])) {
-                        $dataByYear[$year] = [];
-                    }
-                    
-                    if (!isset($dataByYear[$year][$monthName])) {
-                        $dataByYear[$year][$monthName] = 0;
-                    }
-                    
-                    $dataByYear[$year][$monthName] += $count;
+                    $monthName = self::normalizeMonthName($matches[2]);
                 }
-                // Tenta outro padrão para estruturas diferentes
+                // Padrão 2: /uploads/YYYY/Mês/
                 elseif (preg_match('#/(\d{4})/([^/]+)/#', $filePath, $matches)) {
                     $year = $matches[1];
                     $monthName = self::normalizeMonthName($matches[2]);
-                    
+                }
+                // Padrão 3: /uploads/Mês/ (extrair ano do nome do arquivo)
+                elseif (preg_match('#/uploads/([^/]+)/(\d{4})-\d{2}-\d{2}_#', $filePath, $matches)) {
+                    $year = $matches[2];
+                    $monthName = self::normalizeMonthName($matches[1]);
+                }
+                
+                // Se conseguiu extrair ano e mês, adiciona aos dados (conta apenas 1 por arquivo único)
+                if ($year && $monthName) {
                     if (!in_array($year, $years)) {
                         $years[] = $year;
                     }
@@ -137,7 +136,7 @@ class StatsController
                         $dataByYear[$year][$monthName] = 0;
                     }
                     
-                    $dataByYear[$year][$monthName] += $count;
+                    $dataByYear[$year][$monthName] += 1; // Sempre conta 1 pois já agrupamos por filename
                 }
             }
             

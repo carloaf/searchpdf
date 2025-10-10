@@ -96,8 +96,8 @@ $app->get('/stats', function ($request, $response) {
                 $maxNumberFile = '';
                 $currentYear = date('Y');
                 
-                // Consulta apenas arquivos do ano atual
-                $filesQuery = $pdo->query("SELECT file_path FROM pdf_index WHERE file_path LIKE '/var/www/html/public/uploads/$currentYear/%'");
+                // Consulta arquivos do ano atual (tanto no diretório YYYY/ quanto em BI YYYY/)
+                $filesQuery = $pdo->query("SELECT file_path FROM pdf_index WHERE (file_path LIKE '/var/www/html/public/uploads/$currentYear/%' OR file_path LIKE '/var/www/html/public/uploads/BI $currentYear/%')");
                 
                 while ($row = $filesQuery->fetch(\PDO::FETCH_ASSOC)) {
                     $filePath = $row['file_path'];

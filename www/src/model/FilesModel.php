@@ -74,13 +74,34 @@ class FilesModel
             $aIsMonth = isset($monthMap[$aLower]);
             $bIsMonth = isset($monthMap[$bLower]);
 
+            // Se ambos são meses, ordena por número do mês
             if ($aIsMonth && $bIsMonth) {
                 return $monthMap[$aLower][0] <=> $monthMap[$bLower][0];
             }
-            if (is_numeric($a) && is_numeric($b)) {
-                return (int)$b <=> (int)$a; // Ordena anos numericamente decrescente
+            
+            // Extrai anos de strings como "BI 2025", "2025", etc.
+            $aYear = null;
+            $bYear = null;
+            
+            if (is_numeric($a)) {
+                $aYear = (int)$a;
+            } elseif (preg_match('/\b(\d{4})\b/', $a, $matches)) {
+                $aYear = (int)$matches[1];
             }
-            return strnatcasecmp($a, $b); // Ordenação alfabética para o resto
+            
+            if (is_numeric($b)) {
+                $bYear = (int)$b;
+            } elseif (preg_match('/\b(\d{4})\b/', $b, $matches)) {
+                $bYear = (int)$matches[1];
+            }
+            
+            // Se ambos contêm anos, ordena em ordem decrescente (mais recente primeiro)
+            if ($aYear !== null && $bYear !== null) {
+                return $bYear <=> $aYear; // 2025, 2024, 2023...
+            }
+            
+            // Ordenação alfabética para o resto
+            return strnatcasecmp($a, $b);
         });
 
         // Ordena os arquivos alfabeticamente
