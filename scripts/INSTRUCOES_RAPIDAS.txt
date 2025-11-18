@@ -1,0 +1,45 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    DOWNLOAD AUTOMÁTICO DE BOLETINS - GUIA RÁPIDO            ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+📋 PASSO A PASSO:
+
+1️⃣  ACESSAR A PÁGINA
+   → Abra: http://10.166.66.246/band/baixar_boletim.php
+   → Faça login no sistema
+   → Selecione: Ano 2024, Mês: Julho
+
+2️⃣  ABRIR CONSOLE DO NAVEGADOR
+   → Pressione F12 (ou Ctrl+Shift+J no Chrome)
+   → Clique na aba "Console"
+
+3️⃣  COPIAR E EXECUTAR O SCRIPT
+   → Abra o arquivo: download_boletins_avancado.js
+   → Copie TODO o conteúdo
+   → Cole no console e pressione Enter
+
+4️⃣  AGUARDAR DOWNLOADS
+   → Se o navegador perguntar, clique em "Permitir múltiplos downloads"
+   → Acompanhe o progresso no console
+   → Arquivos serão salvos em ~/Downloads
+
+5️⃣  MOVER ARQUIVOS PARA A PASTA FINAL
+   Execute no terminal:
+   
+   mv ~/Downloads/2024-07-*.pdf "/home/augusto/workspace/searchpdf/uploads/BI 2024/Julho/"
+
+6️⃣  VERIFICAR
+   ls -lh "/home/augusto/workspace/searchpdf/uploads/BI 2024/Julho/"
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  PARA OUTROS MESES: Repita os passos alterando o mês na página do SISBOL   ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+📁 Arquivos Criados:
+   • download_boletins.js ..................... Script simples
+   • download_boletins_avancado.js ............ Script completo (RECOMENDADO)
+   • README.md ................................ Documentação detalhada
+   • INSTRUCOES_RAPIDAS.txt ................... Este arquivo
+
+💡 DICA: Use o script avançado para ter progresso visual e estatísticas!
+

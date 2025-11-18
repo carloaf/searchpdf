@@ -246,6 +246,12 @@ body[data-theme="midnight"] .file-tree .folder-item:not(.collapsed) {
     color: var(--primary-color);
     margin-right: 0.4rem;
 }
+
+/* Cor do chevron no tema escuro para melhor visibilidade */
+body[data-theme="midnight"] .file-tree .folder-toggle {
+    color: var(--accent-color);
+}
+
 /* Gira o ícone quando a pasta NÃO está colapsada */
 .file-tree .folder-item:not(.collapsed) > .folder-toggle {
     transform: rotate(90deg);

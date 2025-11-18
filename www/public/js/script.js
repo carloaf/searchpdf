@@ -244,7 +244,7 @@ if (!window.searchAppInitialized) {
                 midnight: {
                     label: 'Noite urbana',
                     values: {
-                        '--primary-color': '#37474f',
+                        '--primary-color': '#37474f',                        
                         '--primary-light': '#546e7a',
                         '--primary-dark': '#102027',
                         '--accent-color': '#ff7043',
