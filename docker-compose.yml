@@ -4,29 +4,32 @@ services:
     image: mariadb:latest
     container_name: searchpdf_db
     restart: unless-stopped
-    network_mode: host
+    ports:
+      - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root_password
       MYSQL_DATABASE: searchpdf_db
       MYSQL_USER: searchpdf_user
       MYSQL_PASSWORD: user_password
     volumes:
-      - /home/augusto/workspace/searchpdf/mysql:/var/lib/mysql # Usa um volume nomeado para persistência
+      - ./mysql:/var/lib/mysql # Usa um volume nomeado para persistência
 
   # Serviço da Aplicação PHP/Apache
   app:
+    image: searchpdf-app:latest
     build: . # Constrói a imagem a partir do Dockerfile neste mesmo diretório
     container_name: searchpdf_app
     restart: unless-stopped
-    network_mode: host
+    ports:
+      - "8080:80"
     volumes:
-      - /home/augusto/workspace/searchpdf/www:/var/www/html # Mapeia todo o seu projeto para o container
-      - /home/augusto/workspace/searchpdf/uploads:/var/www/html/public/uploads # Mapeia conteúdo arq pdf
+      - ./www:/var/www/html # Mapeia todo o seu projeto para o container
+      - ./uploads:/var/www/html/public/uploads # Mapeia conteúdo arq pdf
     depends_on:
       - db
     environment:
       # Variáveis para a aplicação se conectar ao banco
-      DB_HOST: 127.0.0.1
+      DB_HOST: db
       DB_NAME: searchpdf_db
       DB_USER: searchpdf_user
       DB_PASS: user_password
