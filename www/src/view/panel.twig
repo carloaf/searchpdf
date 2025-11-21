@@ -14,8 +14,8 @@
         <span><i class="fas fa-calendar-week me-1"></i> Buscas na Última Semana: <strong id="stats-week">...</strong></span>
         <span>
             <i class="fas fa-file-pdf me-1"></i> Último Arquivo Indexado: <strong id="stats-last-file">...</strong>
-            <button type="button" class="btn btn-sm btn-reindex ms-2" id="btn-reindex" title="Executar indexação de novos arquivos">
-                <i class="fas fa-sync-alt"></i>
+            <button type="button" class="btn btn-sm btn-admin-login ms-2" id="btn-admin-login" title="Acesso Admin/Upload" data-bs-toggle="modal" data-bs-target="#adminLoginModal">
+                <i class="fas fa-key"></i>
             </button>
         </span>
     </div>
@@ -121,6 +121,44 @@
     </div>
 
 </div> <!-- Fim do .search-container -->
+
+<!-- Modal de Login Admin -->
+<div class="modal fade" id="adminLoginModal" tabindex="-1" aria-labelledby="adminLoginModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="adminLoginModalLabel">
+                    <i class="fas fa-lock me-2"></i>Acesso Administrativo
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div id="login-alert" class="alert alert-danger d-none" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i><span id="login-error-msg"></span>
+                </div>
+                <form id="admin-login-form">
+                    <div class="mb-3">
+                        <label for="admin-username" class="form-label">
+                            <i class="fas fa-user me-1"></i>Usuário
+                        </label>
+                        <input type="text" class="form-control" id="admin-username" name="username" required autofocus>
+                    </div>
+                    <div class="mb-3">
+                        <label for="admin-password" class="form-label">
+                            <i class="fas fa-key me-1"></i>Senha
+                        </label>
+                        <input type="password" class="form-control" id="admin-password" name="password" required>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary" id="btn-do-login">
+                            <i class="fas fa-sign-in-alt me-2"></i>Entrar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
 <button type="button" class="theme-settings-button" id="theme-settings-button" aria-label="Abrir configurações de cores">
     <i class="fas fa-cog"></i>

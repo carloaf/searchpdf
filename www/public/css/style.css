@@ -643,9 +643,9 @@ body[data-theme="midnight"] .file-tree .folder-toggle {
     font-weight: 500;
 }
 
-/* Botão de reindexação ao lado das estatísticas */
-#btn-reindex,
-.btn-reindex {
+/* Botão de login admin ao lado das estatísticas */
+#btn-admin-login,
+.btn-admin-login {
     padding: 0.25rem 0.5rem;
     font-size: 0.85rem;
     line-height: 1;
@@ -658,35 +658,34 @@ body[data-theme="midnight"] .file-tree .folder-toggle {
     cursor: pointer;
 }
 
-#btn-reindex:hover:not(:disabled),
-.btn-reindex:hover:not(:disabled) {
+#btn-admin-login:hover:not(:disabled),
+.btn-admin-login:hover:not(:disabled) {
     background-color: var(--primary-light);
     border-color: var(--primary-color);
     transform: scale(1.1);
     box-shadow: 0 2px 8px var(--tree-shadow);
 }
 
-#btn-reindex:disabled,
-.btn-reindex:disabled {
+#btn-admin-login:disabled,
+.btn-admin-login:disabled {
     opacity: 0.7;
     cursor: not-allowed;
 }
 
-#btn-reindex i.fa-spin {
-    animation: fa-spin 1s infinite linear;
+/* Estilos do modal de login */
+#adminLoginModal .modal-content {
+    border-radius: 0.75rem;
+    border: none;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
-/* Estados de feedback do botão */
-#btn-reindex.btn-reindex-success,
-.btn-reindex.btn-reindex-success {
-    background-color: var(--success-color);
-    border-color: var(--success-color);
+#adminLoginModal .modal-header {
+    border-radius: 0.75rem 0.75rem 0 0;
 }
 
-#btn-reindex.btn-reindex-error,
-.btn-reindex.btn-reindex-error {
-    background-color: var(--error-color);
-    border-color: var(--error-color);
+#adminLoginModal .form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(46, 125, 50, 0.25);
 }
 
 /* Remove a barra vertical que estava no HTML, pois o 'gap' já faz a separação */

@@ -1,6 +1,6 @@
 # SearchPDF
 
-Um sistema de busca em documentos PDF com recursos avançados de pesquisa e indexação.
+Um sistema de busca em documentos PDF com recursos avançados de pesquisa, indexação e **upload seguro com autenticação**.
 
 ## Visão Geral
 
@@ -8,12 +8,16 @@ SearchPDF é uma aplicação web desenvolvida para permitir a busca rápida e ef
 
 ## Características
 
-- Indexação automática de documentos PDF
-- Busca por conteúdo de texto completo
-- Visualização da estrutura de arquivos em árvore
-- Filtros de busca (case sensitive, palavra inteira)
-- Estatísticas de uso e documentos
-- Interface responsiva e moderna
+- ✅ Indexação automática de documentos PDF
+- ✅ Busca por conteúdo de texto completo
+- ✅ Visualização da estrutura de arquivos em árvore
+- ✅ Filtros de busca (case sensitive, palavra inteira)
+- ✅ Estatísticas de uso e documentos
+- ✅ Interface responsiva e moderna
+- 🆕 **Sistema de autenticação de usuários**
+- 🆕 **Upload protegido de PDFs com controle de permissões**
+- 🆕 **Auditoria completa de uploads**
+- 🆕 **Organização automática por ano/mês/categoria**
 
 ## Tecnologias Utilizadas
 
@@ -76,6 +80,47 @@ Uma cópia de exemplo é fornecida como `www/config/settings-dist.php`.
 ## Estrutura de Diretórios
 
 
+## 🔐 Sistema de Upload com Autenticação
+
+**Novo!** Sistema completo de upload de PDFs com autenticação e controle de acesso.
+
+### Características do Sistema de Upload
+
+- ✅ **Autenticação de usuários** com senha criptografada (bcrypt)
+- ✅ **Controle de permissões** por roles (admin, uploader, viewer)
+- ✅ **Validação de arquivos** (tipo PDF, tamanho máximo 50MB)
+- ✅ **Organização automática** em pastas por ano/mês/categoria
+- ✅ **Auditoria completa** de todos os uploads
+- ✅ **Interface intuitiva** com histórico de uploads
+- ✅ **Preparado para indexação automática**
+- 🆕 **Acesso público à busca** (não requer autenticação)
+- 🆕 **Login via modal** na página principal (botão com ícone de chave)
+
+### Acesso Rápido
+
+```bash
+# Deploy completo (criar tabelas + configurar permissões)
+./scripts/deploy_upload_system.sh
+
+# Acesso público (busca)
+http://localhost:8080/
+
+# Acesso admin/upload (clique no ícone de chave 🔑 na página principal)
+```
+
+### Credenciais Padrão
+
+⚠️ **Alterar em produção!**
+
+- **Admin**: `admin` / `admin123`
+- **Uploader**: `uploader` / `uploader123`
+- **Viewers**: Não precisam de autenticação (acesso público à busca)
+
+### Documentação Completa
+
+- 📚 [Sistema de Upload - Guia Completo](docs/UPLOAD_SYSTEM.md)
+- 🚀 [Deploy Rápido](docs/QUICK_DEPLOY.md)
+
 ## Licença
 
 Este projeto está licenciado sob a licença MIT - veja o arquivo LICENSE para detalhes.
@@ -83,7 +128,6 @@ Este projeto está licenciado sob a licença MIT - veja o arquivo LICENSE para d
 ## Autoria
 
 Desenvolvido inicialmente por Augusto <carloafernandes@gmail.com>.
-
 
 **Nota:** Este software foi desenvolvido para fins educacionais e pode ser adaptado para uso em ambientes de produção conforme necessário.
 

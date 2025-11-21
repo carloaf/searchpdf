@@ -514,29 +514,44 @@ if (!window.searchAppInitialized) {
                     const maiorNumero = data.max_number > 0 ? data.max_number : MAIOR_NUMERO_ATUAL;
                     window.maiorNumeroDocumento = maiorNumero;
                     
-                    // Extrai a data do arquivo com maior número
-                    let dataFormatada = '';
-                    if (data.max_date) {
-                        const partesData = data.max_date.split('-');
-                        if (partesData.length === 3) {
-                            dataFormatada = `${partesData[2]}/${partesData[1]}/${partesData[0]}`;
+                    // Exibe o último arquivo realmente indexado (do backend)
+                    if (data.last_file && data.last_file !== 'Nenhum' && data.last_file !== 'Nenhum arquivo indexado') {
+                        let displayText = data.last_file;
+                        let titleText = data.last_file;
+                        
+                        // Se tiver informação de quando foi indexado, adiciona ao tooltip
+                        if (data.last_indexed_at) {
+                            titleText += '\nIndexado em: ' + data.last_indexed_at;
                         }
+                        
+                        $('#stats-last-file')
+                            .text(displayText)
+                            .addClass('has-file')
+                            .attr('title', titleText);
+                    } else {
+                        // Fallback: mostra o maior número do ano atual
+                        let dataFormatada = '';
+                        if (data.max_date) {
+                            const partesData = data.max_date.split('-');
+                            if (partesData.length === 3) {
+                                dataFormatada = `${partesData[2]}/${partesData[1]}/${partesData[0]}`;
+                            }
+                        }
+                        
+                        // Se não tiver data, usa a data atual
+                        if (!dataFormatada) {
+                            const hoje = new Date();
+                            const dia = String(hoje.getDate()).padStart(2, '0');
+                            const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+                            const ano = hoje.getFullYear();
+                            dataFormatada = `${dia}/${mes}/${ano}`;
+                        }
+                        
+                        $('#stats-last-file')
+                            .text(`BI ${maiorNumero} - ${dataFormatada}`)
+                            .addClass('has-file')
+                            .attr('title', data.max_file || `Boletim Interno ${maiorNumero}`);
                     }
-                    
-                    // Se não tiver data, usa a data atual
-                    if (!dataFormatada) {
-                        const hoje = new Date();
-                        const dia = String(hoje.getDate()).padStart(2, '0');
-                        const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-                        const ano = hoje.getFullYear();
-                        dataFormatada = `${dia}/${mes}/${ano}`;
-                    }
-                    
-                    // Define o último arquivo indexado com o maior número do ano atual
-                    $('#stats-last-file')
-                        .text(`BI ${maiorNumero} - ${dataFormatada}`)
-                        .addClass('has-file')
-                        .attr('title', data.max_file || `Boletim Interno ${maiorNumero}`);
                     
                     // console.log(`Maior número de documento do ano atual: ${maiorNumero}`);
                     // console.log(`Data do arquivo: ${dataFormatada}`);
@@ -1012,71 +1027,50 @@ if (!window.searchAppInitialized) {
             }
         });
 
-        // Evento para acionar indexação manual
-        $('#btn-reindex').on('click', function() {
-            const $btn = $(this);
-            const $icon = $btn.find('i');
+        // Handler do formulário de login admin
+        $('#admin-login-form').on('submit', function(e) {
+            e.preventDefault();
             
-            // Desabilita o botão e mostra feedback visual
-            $btn.prop('disabled', true);
-            $icon.addClass('fa-spin');
-            $btn.attr('title', 'Indexando...');
+            const $form = $(this);
+            const $btn = $('#btn-do-login');
+            const $alert = $('#login-alert');
+            const $errorMsg = $('#login-error-msg');
+            
+            // Desabilita botão
+            $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Entrando...');
+            $alert.addClass('d-none');
             
             $.ajax({
-                url: 'run-indexer.php',
+                url: 'login',
                 method: 'POST',
-                timeout: 300000, // 5 minutos
+                data: $form.serialize(),
                 success: function(response) {
-                    const data = typeof response === 'string' ? JSON.parse(response) : response;
-                    
-                    if (data.success) {
-                        // Mostra feedback de sucesso
-                        $icon.removeClass('fa-sync-alt fa-spin').addClass('fa-check');
-                        $btn.addClass('btn-reindex-success');
-                        $btn.attr('title', data.message);
-                        
-                        // Atualiza as estatísticas
-                        loadStats();
-                        
-                        // Restaura o botão após 3 segundos
-                        setTimeout(function() {
-                            $icon.removeClass('fa-check').addClass('fa-sync-alt');
-                            $btn.removeClass('btn-reindex-success');
-                            $btn.attr('title', 'Executar indexação de novos arquivos');
-                            $btn.prop('disabled', false);
-                        }, 3000);
-                    } else {
-                        // Mostra erro
-                        $icon.removeClass('fa-sync-alt fa-spin').addClass('fa-times');
-                        $btn.addClass('btn-reindex-error');
-                        $btn.attr('title', data.message || 'Erro na indexação');
-                        
-                        setTimeout(function() {
-                            $icon.removeClass('fa-times').addClass('fa-sync-alt');
-                            $btn.removeClass('btn-reindex-error');
-                            $btn.attr('title', 'Executar indexação de novos arquivos');
-                            $btn.prop('disabled', false);
-                        }, 3000);
-                    }
+                    // Login bem-sucedido - redireciona para upload
+                    window.location.href = 'upload';
                 },
                 error: function(xhr, status, error) {
-                    console.error('Erro na indexação:', error);
-                    
                     // Mostra erro
-                    $icon.removeClass('fa-sync-alt fa-spin').addClass('fa-times');
-                    $btn.addClass('btn-reindex-error');
-                    $btn.attr('title', 'Erro ao executar indexação');
+                    $errorMsg.text('Usuário ou senha incorretos.');
+                    $alert.removeClass('d-none');
                     
-                    setTimeout(function() {
-                        $icon.removeClass('fa-times').addClass('fa-sync-alt');
-                        $btn.removeClass('btn-reindex-error');
-                        $btn.attr('title', 'Executar indexação de novos arquivos');
-                        $btn.prop('disabled', false);
-                    }, 3000);
+                    // Reabilita botão
+                    $btn.prop('disabled', false).html('<i class="fas fa-sign-in-alt me-2"></i>Entrar');
+                    
+                    // Limpa senha
+                    $('#admin-password').val('').focus();
                 }
             });
         });
+        
+        // Limpa o formulário quando o modal é fechado
+        $('#adminLoginModal').on('hidden.bs.modal', function() {
+            $('#admin-login-form')[0].reset();
+            $('#login-alert').addClass('d-none');
+        });
 
+        // Nota: A funcionalidade de reindex foi movida para a área administrativa (/upload)
+        // O botão agora serve como acesso ao login admin
+        
         // Inicializa o gráfico de distribuição após a página carregar
         loadDocumentDistributionChart();
     });
