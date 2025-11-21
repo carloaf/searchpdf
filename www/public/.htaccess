@@ -1,3 +1,21 @@
+# Configurações de MIME types para fontes
+<IfModule mod_mime.c>
+    AddType font/woff2 .woff2
+    AddType font/woff .woff
+    AddType font/ttf .ttf
+    AddType font/otf .otf
+    AddType application/font-woff .woff
+    AddType application/font-woff2 .woff2
+</IfModule>
+
+# Headers CORS para fontes
+<IfModule mod_headers.c>
+    <FilesMatch "\.(woff|woff2|ttf|otf|eot)$">
+        Header set Access-Control-Allow-Origin "*"
+        Header set Cache-Control "max-age=31536000, public"
+    </FilesMatch>
+</IfModule>
+
 RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
