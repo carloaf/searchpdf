@@ -121,16 +121,19 @@ $app->get('/stats', function ($request, $response) {
                 }
                 
                 // Buscar o arquivo mais recente para exibição
-                $lastFile = $pdo->query("SELECT file_path FROM pdf_index ORDER BY last_indexed_at DESC LIMIT 1")->fetch(\PDO::FETCH_ASSOC);
+                $lastFile = $pdo->query("SELECT file_path, last_indexed_at FROM pdf_index ORDER BY last_indexed_at DESC LIMIT 1")->fetch(\PDO::FETCH_ASSOC);
                 
                 if ($lastFile && isset($lastFile['file_path'])) {
                     // Extrai apenas o nome do arquivo do caminho completo
                     $fileName = basename($lastFile['file_path']);
                     
                     // Limita o tamanho do nome do arquivo para exibição
-                    $stats['last_file'] = strlen($fileName) > 30 
-                        ? substr($fileName, 0, 27) . '...' 
+                    $stats['last_file'] = strlen($fileName) > 50 
+                        ? substr($fileName, 0, 47) . '...' 
                         : $fileName;
+                    
+                    // Adiciona informação de quando foi indexado
+                    $stats['last_indexed_at'] = $lastFile['last_indexed_at'];
                 } else {
                     $stats['last_file'] = 'Arquivo sem nome';
                 }
@@ -408,6 +411,27 @@ $app->get('/download/{token}', function ($request, $response, $args) {
 
     return $response->withBody($stream);
 });
+
+// ===================================================================
+// ROTAS DE AUTENTICAÇÃO
+// ===================================================================
+$app->get('/login', [\Controller\AuthController::class, 'showLogin']);
+$app->post('/login', [\Controller\AuthController::class, 'processLogin']);
+$app->get('/logout', [\Controller\AuthController::class, 'logout']);
+$app->get('/auth/check', [\Controller\AuthController::class, 'checkAuth']);
+
+// ===================================================================
+// ROTAS PROTEGIDAS (exigem autenticação e permissão de upload)
+// ===================================================================
+$app->group('', function ($group) {
+    // Página de upload
+    $group->get('/upload', [\Controller\UploadController::class, 'showUploadForm']);
+    
+    // API de upload
+    $group->post('/upload', [\Controller\UploadController::class, 'processUpload']);
+    
+})->add(new \Libs\RoleMiddleware(['admin', 'uploader']))
+  ->add(\Libs\AuthMiddleware::class);
 
 // Rotas AJAX para a funcionalidade de busca
 $app->post('/searchFile', [\Controller\AjaxController::class, 'searchFile']);
