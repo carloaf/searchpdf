@@ -768,6 +768,60 @@ body[data-theme="midnight"] .file-tree .folder-toggle {
     color: #842029;
 }
 
+/* Estilos para o modal de login no tema escuro (midnight) */
+body[data-theme="midnight"] #adminLoginModal .modal-content {
+    background-color: #1a1f2e;
+    border: 1px solid #3a4455;
+}
+
+body[data-theme="midnight"] #adminLoginModal .modal-header {
+    background-color: #2a3142 !important;
+    border-bottom: 2px solid #3a4455;
+}
+
+body[data-theme="midnight"] #adminLoginModal .modal-header .modal-title {
+    color: #e8eaf0 !important;
+}
+
+body[data-theme="midnight"] #adminLoginModal .modal-body {
+    background-color: #1a1f2e;
+}
+
+body[data-theme="midnight"] #adminLoginModal .form-label {
+    color: #e8eaf0;
+}
+
+body[data-theme="midnight"] #adminLoginModal .form-label i {
+    color: #60ad5e;
+}
+
+body[data-theme="midnight"] #adminLoginModal .form-control {
+    background-color: #2a3142;
+    border-color: #3a4455;
+    color: #e8eaf0;
+}
+
+body[data-theme="midnight"] #adminLoginModal .form-control::placeholder {
+    color: #6c7585;
+}
+
+body[data-theme="midnight"] #adminLoginModal .form-control:focus {
+    background-color: #2a3142;
+    border-color: #60ad5e;
+    color: #e8eaf0;
+    box-shadow: 0 0 0 0.2rem rgba(96, 173, 94, 0.25);
+}
+
+body[data-theme="midnight"] #adminLoginModal .alert {
+    background-color: #3d2629;
+    border-color: #5a363a;
+    color: #f8d7da;
+}
+
+body[data-theme="midnight"] #adminLoginModal .alert i {
+    color: #f8d7da;
+}
+
 /* Remove a barra vertical que estava no HTML, pois o 'gap' já faz a separação */
 .search-stats .mx-3 {
     display: none;
