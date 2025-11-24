@@ -677,15 +677,95 @@ body[data-theme="midnight"] .file-tree .folder-toggle {
     border-radius: 0.75rem;
     border: none;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    background-color: #ffffff;
 }
 
 #adminLoginModal .modal-header {
     border-radius: 0.75rem 0.75rem 0 0;
+    background-color: var(--primary-color) !important;
+    border-bottom: 2px solid var(--primary-dark);
+}
+
+#adminLoginModal .modal-header .modal-title {
+    color: #ffffff !important;
+    font-weight: 500;
+}
+
+#adminLoginModal .modal-header .btn-close-white {
+    filter: brightness(0) invert(1);
+    opacity: 1;
+}
+
+#adminLoginModal .modal-body {
+    padding: 2rem;
+    background-color: #ffffff;
+}
+
+#adminLoginModal .form-label {
+    color: var(--text-primary);
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+#adminLoginModal .form-label i {
+    color: var(--primary-color);
+    margin-right: 0.5rem;
+}
+
+#adminLoginModal .form-control {
+    border: 2px solid #d0d0d0;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background-color: #ffffff;
+    color: var(--text-primary);
+}
+
+#adminLoginModal .form-control::placeholder {
+    color: #999999;
 }
 
 #adminLoginModal .form-control:focus {
     border-color: var(--primary-color);
     box-shadow: 0 0 0 0.2rem rgba(46, 125, 50, 0.25);
+    background-color: #ffffff;
+    outline: none;
+}
+
+#adminLoginModal .btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-dark);
+    padding: 0.75rem 2rem;
+    font-weight: 500;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+#adminLoginModal .btn-primary:hover {
+    background-color: var(--primary-dark);
+    border-color: #003d00;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+}
+
+#adminLoginModal .btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    padding: 0.75rem 2rem;
+    font-weight: 500;
+    border-radius: 0.5rem;
+}
+
+#adminLoginModal .alert {
+    border-radius: 0.5rem;
+    border: 1px solid #f5c2c7;
+    background-color: #f8d7da;
+    color: #842029;
+}
+
+#adminLoginModal .alert i {
+    color: #842029;
 }
 
 /* Remove a barra vertical que estava no HTML, pois o 'gap' já faz a separação */
