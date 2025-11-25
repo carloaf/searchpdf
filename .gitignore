@@ -38,6 +38,9 @@ Thumbs.db
 *.swp
 *.swo
 
+# Prompts de IA
+.github/prompts/
+
 # Arquivos de dependências do node (se existirem)
 /node_modules/
 package-lock.json

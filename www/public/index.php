@@ -120,17 +120,44 @@ $app->get('/stats', function ($request, $response) {
                     $stats['max_date'] = date('Y-m-d');
                 }
                 
-                // Buscar o arquivo mais recente para exibição
-                $lastFile = $pdo->query("SELECT file_path, last_indexed_at FROM pdf_index ORDER BY last_indexed_at DESC LIMIT 1")->fetch(\PDO::FETCH_ASSOC);
+                // Buscar o arquivo mais recente do ano corrente
+                $currentYear = date('Y');
+                $stmt = $pdo->prepare("SELECT file_path, last_indexed_at FROM pdf_index 
+                                      WHERE file_path LIKE ? 
+                                      ORDER BY last_indexed_at DESC LIMIT 1");
+                $stmt->execute(["%/$currentYear-%"]);
+                $lastFile = $stmt->fetch(\PDO::FETCH_ASSOC);
+                
+                // Se não encontrou do ano corrente, busca o mais recente de qualquer ano
+                if (!$lastFile) {
+                    $lastFile = $pdo->query("SELECT file_path, last_indexed_at FROM pdf_index ORDER BY last_indexed_at DESC LIMIT 1")->fetch(\PDO::FETCH_ASSOC);
+                }
                 
                 if ($lastFile && isset($lastFile['file_path'])) {
-                    // Extrai apenas o nome do arquivo do caminho completo
                     $fileName = basename($lastFile['file_path']);
                     
-                    // Limita o tamanho do nome do arquivo para exibição
-                    $stats['last_file'] = strlen($fileName) > 50 
-                        ? substr($fileName, 0, 47) . '...' 
-                        : $fileName;
+                    // Formata o nome do arquivo: "2025-11-18_O_217_boletim" -> "BI 217, de 18 Nov 25"
+                    if (preg_match('/(\d{4})-(\d{2})-(\d{2})_O_(\d+)/', $fileName, $matches)) {
+                        $year = substr($matches[1], -2); // Pega últimos 2 dígitos do ano
+                        $month = $matches[2];
+                        $day = $matches[3];
+                        $number = ltrim($matches[4], '0'); // Remove zeros à esquerda
+                        
+                        // Array de meses abreviados em português
+                        $monthNames = [
+                            '01' => 'Jan', '02' => 'Fev', '03' => 'Mar', '04' => 'Abr',
+                            '05' => 'Mai', '06' => 'Jun', '07' => 'Jul', '08' => 'Ago',
+                            '09' => 'Set', '10' => 'Out', '11' => 'Nov', '12' => 'Dez'
+                        ];
+                        
+                        $monthName = $monthNames[$month] ?? $month;
+                        $stats['last_file'] = "BI $number, de $day $monthName $year";
+                    } else {
+                        // Se não conseguir extrair, limita o tamanho do nome
+                        $stats['last_file'] = strlen($fileName) > 50 
+                            ? substr($fileName, 0, 47) . '...' 
+                            : $fileName;
+                    }
                     
                     // Adiciona informação de quando foi indexado
                     $stats['last_indexed_at'] = $lastFile['last_indexed_at'];
