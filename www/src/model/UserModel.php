@@ -261,4 +261,49 @@ class UserModel
             return [];
         }
     }
+    
+    /**
+     * Busca informações de um upload específico por ID
+     * 
+     * @param int $uploadId
+     * @return array|null
+     */
+    public static function getUploadById($uploadId)
+    {
+        try {
+            $pdo = self::getConnection();
+            
+            $sql = "SELECT * FROM upload_log WHERE id = ?";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([$uploadId]);
+            
+            return $stmt->fetch() ?: null;
+            
+        } catch (\PDOException $e) {
+            error_log("Erro ao buscar upload por ID: " . $e->getMessage());
+            return null;
+        }
+    }
+    
+    /**
+     * Deleta registro de upload do banco de dados
+     * 
+     * @param int $uploadId
+     * @return bool
+     */
+    public static function deleteUploadRecord($uploadId)
+    {
+        try {
+            $pdo = self::getConnection();
+            
+            $sql = "DELETE FROM upload_log WHERE id = ?";
+            $stmt = $pdo->prepare($sql);
+            
+            return $stmt->execute([$uploadId]);
+            
+        } catch (\PDOException $e) {
+            error_log("Erro ao deletar registro de upload: " . $e->getMessage());
+            return false;
+        }
+    }
 }

@@ -430,6 +430,9 @@ $app->group('', function ($group) {
     // API de upload
     $group->post('/upload', [\Controller\UploadController::class, 'processUpload']);
     
+    // API de deleção de upload
+    $group->delete('/upload/{id}', [\Controller\UploadController::class, 'deleteUpload']);
+    
 })->add(new \Libs\RoleMiddleware(['admin', 'uploader']))
   ->add(\Libs\AuthMiddleware::class);
 

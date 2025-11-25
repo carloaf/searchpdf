@@ -20,9 +20,9 @@ class UploadController
         $view = \Slim\Views\Twig::fromRequest($request);
         $settings = $request->getAttribute('settings');
         
-        // Busca histórico de uploads do usuário
+        // Busca histórico de uploads de todos os usuários (admin e uploader)
         $userId = $request->getAttribute('user_id');
-        $history = UserModel::getUploadHistory($userId, 20);
+        $history = UserModel::getUploadHistory(null, 50); // null = todos os usuários
         
         return $view->render($response, 'upload.twig', [
             'username' => $request->getAttribute('username'),
@@ -130,13 +130,44 @@ class UploadController
         $originalFilename = $uploadedFile->getClientFilename();
         $sanitizedFilename = self::sanitizeFilename($originalFilename);
         $targetPath = $targetDir . '/' . $sanitizedFilename;
+        $newFileSize = $uploadedFile->getSize();
         
-        // Verifica se o arquivo já existe
-        if (file_exists($targetPath)) {
+        // Verifica duplicatas (mesmo nome e tamanho)
+        $duplicateInfo = self::checkDuplicate($targetPath, $newFileSize);
+        
+        if ($duplicateInfo['is_duplicate']) {
+            // Arquivo idêntico já existe (mesmo nome e tamanho)
             return self::jsonResponse($response, [
                 'success' => false,
-                'error' => "O arquivo '$sanitizedFilename' já existe neste diretório."
+                'error' => "Arquivo duplicado detectado: '$sanitizedFilename' ({$duplicateInfo['size_formatted']}) já existe.",
+                'duplicate' => true,
+                'existing_file' => [
+                    'filename' => $sanitizedFilename,
+                    'size' => $duplicateInfo['size'],
+                    'size_formatted' => $duplicateInfo['size_formatted'],
+                    'modified' => $duplicateInfo['modified']
+                ]
             ], 409);
+        }
+        
+        // Se o arquivo existe mas com tamanho diferente, remove o antigo
+        if ($duplicateInfo['exists']) {
+            $oldSize = $duplicateInfo['size'];
+            $oldSizeFormatted = $duplicateInfo['size_formatted'];
+            $newSizeFormatted = self::formatFileSize($newFileSize);
+            
+            // Faz backup do arquivo antigo antes de deletar
+            $backupPath = $targetPath . '.old_' . date('YmdHis');
+            if (@rename($targetPath, $backupPath)) {
+                error_log("Arquivo substituído: $sanitizedFilename (antigo: $oldSizeFormatted, novo: $newSizeFormatted)");
+                $replacedOldFile = true;
+            } else {
+                error_log("Falha ao fazer backup de arquivo existente: $targetPath");
+                return self::jsonResponse($response, [
+                    'success' => false,
+                    'error' => "Erro ao substituir arquivo existente."
+                ], 500);
+            }
         }
         
         try {
@@ -333,6 +364,84 @@ class UploadController
     }
     
     /**
+     * Cria backup de arquivo existente antes de substituir
+     * @return string|false Caminho do backup ou false em caso de erro
+     */
+    private static function backupExistingFile($filePath)
+    {
+        if (!file_exists($filePath)) {
+            return false;
+        }
+        
+        // Criar diretório de backups se não existir
+        $backupDir = dirname($filePath) . '/.backups';
+        if (!is_dir($backupDir)) {
+            mkdir($backupDir, 0755, true);
+        }
+        
+        // Gerar nome do backup com timestamp
+        $fileName = basename($filePath);
+        $timestamp = date('Y-m-d_H-i-s');
+        $backupPath = $backupDir . '/' . pathinfo($fileName, PATHINFO_FILENAME) 
+                    . '_backup_' . $timestamp 
+                    . '.' . pathinfo($fileName, PATHINFO_EXTENSION);
+        
+        // Mover arquivo para backup
+        if (rename($filePath, $backupPath)) {
+            return $backupPath;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Verifica se existe arquivo duplicado
+     * @param string $targetPath Caminho completo do arquivo
+     * @param int $newFileSize Tamanho do novo arquivo em bytes
+     * @return array Informações sobre duplicação
+     */
+    private static function checkDuplicate($targetPath, $newFileSize)
+    {
+        $result = [
+            'exists' => false,
+            'is_duplicate' => false,
+            'size' => 0,
+            'size_formatted' => '',
+            'modified' => ''
+        ];
+        
+        if (file_exists($targetPath)) {
+            $result['exists'] = true;
+            $result['size'] = filesize($targetPath);
+            $result['size_formatted'] = self::formatFileSize($result['size']);
+            $result['modified'] = date('Y-m-d H:i:s', filemtime($targetPath));
+            
+            // É duplicado se o tamanho for exatamente igual
+            if ($result['size'] === $newFileSize) {
+                $result['is_duplicate'] = true;
+            }
+        }
+        
+        return $result;
+    }
+    
+    /**
+     * Formata tamanho de arquivo para leitura humana
+     * @param int $bytes Tamanho em bytes
+     * @return string Tamanho formatado (ex: "2.5 MB")
+     */
+    private static function formatFileSize($bytes)
+    {
+        $units = ['B', 'KB', 'MB', 'GB'];
+        $bytes = max($bytes, 0);
+        $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
+        $pow = min($pow, count($units) - 1);
+        $bytes /= (1 << (10 * $pow));
+        
+        return round($bytes, 2) . ' ' . $units[$pow];
+    }
+    
+    /**
      * Helper para resposta JSON
      */
     private static function jsonResponse($response, $data, $status = 200)
@@ -341,6 +450,78 @@ class UploadController
         return $response
             ->withStatus($status)
             ->withHeader('Content-Type', 'application/json; charset=utf-8');
+    }
+    
+    /**
+     * Deleta um arquivo do histórico de uploads
+     */
+    public static function deleteUpload($request, $response, $args)
+    {
+        $uploadId = $args['id'] ?? null;
+        $userId = $request->getAttribute('user_id');
+        $userRole = $request->getAttribute('user_role');
+        
+        if (!$uploadId) {
+            return self::jsonResponse($response, [
+                'success' => false,
+                'error' => 'ID do upload não informado.'
+            ], 400);
+        }
+        
+        // Busca informações do upload
+        $uploadInfo = UserModel::getUploadById($uploadId);
+        
+        if (!$uploadInfo) {
+            return self::jsonResponse($response, [
+                'success' => false,
+                'error' => 'Upload não encontrado.'
+            ], 404);
+        }
+        
+        // Verifica permissão: apenas o próprio usuário ou admin pode deletar
+        if ($uploadInfo['user_id'] != $userId && $userRole !== 'admin') {
+            return self::jsonResponse($response, [
+                'success' => false,
+                'error' => 'Você não tem permissão para deletar este arquivo.'
+            ], 403);
+        }
+        
+        $filePath = $uploadInfo['file_path'];
+        $deleted = false;
+        $fileDeleted = false;
+        
+        // Deleta o arquivo físico se existir
+        if (file_exists($filePath)) {
+            if (@unlink($filePath)) {
+                $fileDeleted = true;
+                error_log("Arquivo deletado: $filePath por user_id: $userId");
+            } else {
+                error_log("Falha ao deletar arquivo físico: $filePath");
+            }
+        } else {
+            // Arquivo não existe, mas continua para deletar o registro
+            error_log("Arquivo não encontrado para deletar: $filePath");
+            $fileDeleted = true; // Considera como deletado já que não existe
+        }
+        
+        // Deleta o registro do banco de dados
+        if (UserModel::deleteUploadRecord($uploadId)) {
+            $deleted = true;
+            error_log("Registro de upload ID $uploadId deletado do banco");
+        }
+        
+        if ($deleted) {
+            return self::jsonResponse($response, [
+                'success' => true,
+                'message' => 'Arquivo deletado com sucesso.',
+                'file_deleted' => $fileDeleted
+            ], 200);
+        } else {
+            return self::jsonResponse($response, [
+                'success' => false,
+                'error' => 'Erro ao deletar registro do upload.'
+            ], 500);
+        }
     }
     
     /**

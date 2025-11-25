@@ -163,16 +163,21 @@
                                         <th>Arquivo</th>
                                         <th>Ano/Mês</th>
                                         <th>Tamanho</th>
+                                        <th>Usuário</th>
                                         <th>Status</th>
+                                        <th>Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for item in history %}
-                                    <tr>
+                                    <tr data-upload-id="{{ item.id }}">
                                         <td class="small">{{ item.upload_date|date('d/m/Y H:i') }}</td>
                                         <td class="small">{{ item.filename }}</td>
                                         <td class="small">{{ item.year }}/{{ item.month }}</td>
                                         <td class="small">{{ (item.file_size / 1024 / 1024)|number_format(2) }} MB</td>
+                                        <td class="small">
+                                            <span class="badge bg-secondary">{{ item.username }}</span>
+                                        </td>
                                         <td>
                                             {% if item.status == 'success' %}
                                                 <span class="badge bg-success">Sucesso</span>
@@ -181,6 +186,15 @@
                                             {% else %}
                                                 <span class="badge bg-danger">Falha</span>
                                             {% endif %}
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-danger btn-delete-upload" 
+                                                    data-id="{{ item.id }}" 
+                                                    data-filename="{{ item.filename }}" 
+                                                    data-filepath="{{ item.file_path }}"
+                                                    title="Deletar arquivo">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
                                         </td>
                                     </tr>
                                     {% endfor %}
@@ -249,6 +263,58 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
                 reindexStatus.textContent = '';
             }, 5000);
+        });
+    });
+    
+    // Handler para botões de deletar
+    document.querySelectorAll('.btn-delete-upload').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const uploadId = this.dataset.id;
+            const filename = this.dataset.filename;
+            const filepath = this.dataset.filepath;
+            
+            if (!confirm(`Tem certeza que deseja deletar o arquivo:\n\n${filename}?\n\nEsta ação não pode ser desfeita!`)) {
+                return;
+            }
+            
+            // Desabilita o botão
+            this.disabled = true;
+            const originalHtml = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            
+            // Envia requisição DELETE
+            fetch(`/upload/${uploadId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ file_path: filepath })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Remove a linha da tabela
+                    const row = document.querySelector(`tr[data-upload-id="${uploadId}"]`);
+                    row.style.backgroundColor = '#d4edda';
+                    setTimeout(() => {
+                        row.remove();
+                        // Se não há mais linhas, recarrega a página
+                        if (document.querySelectorAll('tbody tr').length === 0) {
+                            location.reload();
+                        }
+                    }, 500);
+                } else {
+                    alert('Erro ao deletar arquivo: ' + (data.error || data.message));
+                    this.disabled = false;
+                    this.innerHTML = originalHtml;
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Erro ao deletar arquivo. Verifique o console.');
+                this.disabled = false;
+                this.innerHTML = originalHtml;
+            });
         });
     });
     
