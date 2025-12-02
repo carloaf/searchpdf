@@ -135,8 +135,10 @@ $app->get('/stats', function ($request, $response) {
                 
                 // Encontra o arquivo com o maior número de boletim
                 foreach ($files as $file) {
-                    if (preg_match('/_O_(\d+)_/', $file['file_path'], $matches)) {
-                        $number = intval($matches[1]);
+                    // Tenta diferentes padrões: _O_NNN_ ou _NNN_ ou -NNN- 
+                    if (preg_match('/_O_(\d+)_|_(\d+)_boletim|-(\d+)-/', $file['file_path'], $matches)) {
+                        // Pega o primeiro grupo não vazio
+                        $number = intval($matches[1] ?: $matches[2] ?: $matches[3]);
                         if ($number > $maxNumber) {
                             $maxNumber = $number;
                             $lastFile = $file;
@@ -150,8 +152,10 @@ $app->get('/stats', function ($request, $response) {
                     $files = $stmt->fetchAll(\PDO::FETCH_ASSOC);
                     
                     foreach ($files as $file) {
-                        if (preg_match('/_O_(\d+)_/', $file['file_path'], $matches)) {
-                            $number = intval($matches[1]);
+                        // Tenta diferentes padrões: _O_NNN_ ou _NNN_ ou -NNN-
+                        if (preg_match('/_O_(\d+)_|_(\d+)_boletim|-(\d+)-/', $file['file_path'], $matches)) {
+                            // Pega o primeiro grupo não vazio
+                            $number = intval($matches[1] ?: $matches[2] ?: $matches[3]);
                             if ($number > $maxNumber) {
                                 $maxNumber = $number;
                                 $lastFile = $file;
