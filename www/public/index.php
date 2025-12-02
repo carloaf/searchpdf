@@ -120,17 +120,44 @@ $app->get('/stats', function ($request, $response) {
                     $stats['max_date'] = date('Y-m-d');
                 }
                 
-                // Buscar o arquivo mais recente do ano corrente
+                // Buscar o arquivo com maior número do boletim do ano corrente
                 $currentYear = date('Y');
+                
+                // Busca todos os arquivos do ano corrente e extrai o número do boletim
                 $stmt = $pdo->prepare("SELECT file_path, last_indexed_at FROM pdf_index 
                                       WHERE file_path LIKE ? 
-                                      ORDER BY last_indexed_at DESC LIMIT 1");
+                                      ORDER BY file_path DESC");
                 $stmt->execute(["%/$currentYear-%"]);
-                $lastFile = $stmt->fetch(\PDO::FETCH_ASSOC);
+                $files = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+                
+                $lastFile = null;
+                $maxNumber = -1;
+                
+                // Encontra o arquivo com o maior número de boletim
+                foreach ($files as $file) {
+                    if (preg_match('/_O_(\d+)_/', $file['file_path'], $matches)) {
+                        $number = intval($matches[1]);
+                        if ($number > $maxNumber) {
+                            $maxNumber = $number;
+                            $lastFile = $file;
+                        }
+                    }
+                }
                 
                 // Se não encontrou do ano corrente, busca o mais recente de qualquer ano
                 if (!$lastFile) {
-                    $lastFile = $pdo->query("SELECT file_path, last_indexed_at FROM pdf_index ORDER BY last_indexed_at DESC LIMIT 1")->fetch(\PDO::FETCH_ASSOC);
+                    $stmt = $pdo->query("SELECT file_path, last_indexed_at FROM pdf_index ORDER BY file_path DESC");
+                    $files = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+                    
+                    foreach ($files as $file) {
+                        if (preg_match('/_O_(\d+)_/', $file['file_path'], $matches)) {
+                            $number = intval($matches[1]);
+                            if ($number > $maxNumber) {
+                                $maxNumber = $number;
+                                $lastFile = $file;
+                            }
+                        }
+                    }
                 }
                 
                 if ($lastFile && isset($lastFile['file_path'])) {
