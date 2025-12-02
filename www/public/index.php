@@ -139,14 +139,12 @@ $app->get('/stats', function ($request, $response) {
                     if (preg_match('/_O_(\d+)_|_(\d+)_boletim|-(\d+)-/', $file['file_path'], $matches)) {
                         // Pega o primeiro grupo não vazio
                         $number = intval($matches[1] ?: $matches[2] ?: $matches[3]);
-                        error_log("DEBUG: Arquivo={$file['file_path']}, Número=$number, MaxAtual=$maxNumber");
                         if ($number > $maxNumber) {
                             $maxNumber = $number;
                             $lastFile = $file;
                         }
                     }
                 }
-                error_log("DEBUG: Arquivo final selecionado: " . ($lastFile ? $lastFile['file_path'] : 'NENHUM') . ", Maior número: $maxNumber");
                 
                 // Se não encontrou do ano corrente, busca o mais recente de qualquer ano
                 if (!$lastFile) {
