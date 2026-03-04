@@ -96,7 +96,24 @@ Uma cópia de exemplo é fornecida como `www/config/settings-dist.php`.
 - 🆕 **Acesso público à busca** (não requer autenticação)
 - 🆕 **Login via modal** na página principal (botão com ícone de chave)
 
-### Acesso Rápido
+## Acesso ao Sistema em Produção
+
+### 🌐 URLs de Acesso
+
+**Servidor de Produção**: VM-7CTA-11DSUP-ARRANCHAMENTO-HOMOLOGACAO
+
+- **SearchPDF**: http://10.166.72.36/searchpdf/
+- **SAGA** (Sistema principal): http://10.166.72.36/
+
+### 📋 Arquitetura
+
+O sistema utiliza nginx como proxy reverso na porta 80 para rotear requisições:
+- Requisições para `/` → Sistema SAGA
+- Requisições para `/searchpdf/` → Sistema SearchPDF
+
+📖 **Documentação completa**: [docs/NGINX_PROXY_SETUP.md](docs/NGINX_PROXY_SETUP.md)
+
+### Acesso Rápido (Desenvolvimento Local)
 
 ```bash
 # Deploy completo (criar tabelas + configurar permissões)

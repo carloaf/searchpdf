@@ -29,7 +29,8 @@ class UploadController
             'role' => $request->getAttribute('user_role'),
             'history' => $history,
             'max_file_size' => self::getMaxFileSize(),
-            'max_file_size_mb' => self::getMaxFileSize() / 1024 / 1024
+            'max_file_size_mb' => self::getMaxFileSize() / 1024 / 1024,
+            'url_base' => $settings['url_base']
         ]);
     }
     

@@ -10,7 +10,7 @@
             <p class="text-muted mb-2">
                 Bem-vindo, <strong>{{ username }}</strong> 
                 ({{ role }}) | 
-                <a href="/" class="text-primary"><i class="fas fa-arrow-left"></i> Voltar para Busca</a>
+                <a href="{{ url_base }}/logout" class="text-primary"><i class="fas fa-arrow-left"></i> Voltar para Busca</a>
             </p>
             <div class="d-flex align-items-center gap-2">
                 <button type="button" class="btn btn-sm btn-outline-primary" id="btn-reindex-upload" title="Executar indexação de novos arquivos">
@@ -237,7 +237,7 @@ document.addEventListener('DOMContentLoaded', function() {
         reindexStatus.textContent = 'Indexando...';
         reindexStatus.className = 'small text-info';
         
-        fetch('../run-indexer.php', {
+        fetch((window.APP_BASE_URL || '') + '/run-indexer.php', {
             method: 'POST'
         })
         .then(response => response.json())
@@ -282,7 +282,7 @@ document.addEventListener('DOMContentLoaded', function() {
             this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
             
             // Envia requisição DELETE
-            fetch(`/upload/${uploadId}`, {
+            fetch((window.APP_BASE_URL || '') + `/upload/${uploadId}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json'
@@ -340,7 +340,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 200);
         
         // Envia via fetch
-        fetch('/upload', {
+        fetch((window.APP_BASE_URL || '') + '/upload', {
             method: 'POST',
             body: formData
         })

@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  nginx-proxy:
+    image: nginx:alpine
+    container_name: nginx_proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - saga_network
+      - searchpdf_default
+
+networks:
+  saga_network:
+    external:
+      name: saga_saga_network
+  searchpdf_default:
+    external: true

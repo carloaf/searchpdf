@@ -122,9 +122,13 @@ class AuthController
         session_unset();
         session_destroy();
         
+        // Pega a URL base das configurações
+        $settings = $request->getAttribute('settings');
+        $redirectUrl = $settings['url_base'] ?? '/';
+        
         return $response
             ->withStatus(302)
-            ->withHeader('Location', '/login');
+            ->withHeader('Location', $redirectUrl);
     }
     
     /**

@@ -456,7 +456,7 @@ if (!window.searchAppInitialized) {
             // Realiza uma requisição AJAX para obter a lista de arquivos
             return new Promise((resolve) => {
                 $.ajax({
-                    url: 'files/list/' + anoAtual, // Endpoint para listar arquivos do ano atual
+                    url: (window.APP_BASE_URL || '') + '/files/list/' + anoAtual, // Endpoint para listar arquivos do ano atual
                     method: 'GET',
                     dataType: 'json',
                     success: function(data) {
@@ -502,7 +502,7 @@ if (!window.searchAppInitialized) {
             
             // Carrega as estatísticas normais
             $.ajax({
-                url: 'stats',
+                url: (window.APP_BASE_URL || '') + '/stats',
                 method: 'GET',
                 dataType: 'json',
                 success: function(data) {
@@ -654,7 +654,7 @@ if (!window.searchAppInitialized) {
         // Função para carregar e renderizar o gráfico de barras de buscas diárias
         function loadDailyChart() {
             $.ajax({
-                url: 'stats/daily',
+                url: (window.APP_BASE_URL || '') + '/stats/daily',
                 method: 'GET',
                 dataType: 'json',
                 success: function(data) {
@@ -744,7 +744,7 @@ if (!window.searchAppInitialized) {
         // Função para carregar e renderizar o gráfico de termos mais pesquisados
         function loadTermsChart() {
             $.ajax({
-                url: 'stats/terms',
+                url: (window.APP_BASE_URL || '') + '/stats/terms',
                 method: 'GET',
                 dataType: 'json',
                 success: function(data) {
@@ -965,7 +965,7 @@ if (!window.searchAppInitialized) {
 
             $.ajax({
                 type: "POST",
-                url: "searchFile",
+                url: (window.APP_BASE_URL || '') + "/searchFile",
                 data: {
                     'search': $('#input-search').val(),
                     'ignore_case': $('#chk-ignore-case').is(':checked'),
@@ -1041,7 +1041,7 @@ if (!window.searchAppInitialized) {
             $alert.addClass('d-none');
             
             $.ajax({
-                url: 'login',
+                url: (window.APP_BASE_URL || '') + '/login',
                 method: 'POST',
                 data: $form.serialize(),
                 success: function(response) {
@@ -1070,6 +1070,7 @@ if (!window.searchAppInitialized) {
 
         // Nota: A funcionalidade de reindex foi movida para a área administrativa (/upload)
         // O botão agora serve como acesso ao login admin
+        // Bootstrap 5 gerencia o modal automaticamente via data-bs-toggle
         
         // Inicializa o gráfico de distribuição após a página carregar
         loadDocumentDistributionChart();

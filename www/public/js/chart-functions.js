@@ -183,7 +183,7 @@ function loadDocumentDistributionChart() {
     }
     
     $.ajax({
-        url: window.location.pathname.endsWith('/panel') ? 'stats/document-distribution' : '/stats/document-distribution',
+        url: (window.APP_BASE_URL || '') + '/stats/document-distribution',
         method: 'GET',
         dataType: 'json',
         success: function(data) {

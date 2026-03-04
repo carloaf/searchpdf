@@ -1,0 +1,18 @@
+# Ignora diretório de dados do MySQL
+mysql/
+
+# Ignora arquivos de git
+.git/
+.gitignore
+
+# Ignora arquivos de upload
+uploads/
+
+# Ignora logs
+*.log
+
+# Ignora arquivos temporários
+.DS_Store
+Thumbs.db
+*.tmp
+*.cache

@@ -11,4 +11,3 @@ Concluída a etapa de copiar/migrar todo o conteúdo do projeto para um servidor
 tsh ssh suporte@VM-7CTA-11DSUP-ARRANCHAMENTO-HOMOLOGACAO "ls -la /workspace/searchpdf/"
 Copiamos as imagens docker também, pois não temos acesso no servidor para buildar as imagens do dockerhub.
 
-Próximo passo é 
