@@ -261,6 +261,68 @@ class UserModel
             return [];
         }
     }
+
+    /**
+     * Busca histórico de uploads com paginação
+     * 
+     * @param int|null $userId
+     * @param int $limit
+     * @param int $offset
+     * @return array ['data' => [], 'total' => int]
+     */
+    public static function getUploadHistoryPaginated($userId = null, $limit = 15, $offset = 0)
+    {
+        try {
+            $pdo = self::getConnection();
+            
+            // Conta o total de registros
+            $countSql = "SELECT COUNT(*) FROM upload_log ul JOIN users u ON ul.user_id = u.id";
+            if ($userId) {
+                $countSql .= " WHERE ul.user_id = ?";
+                $countStmt = $pdo->prepare($countSql);
+                $countStmt->execute([$userId]);
+            } else {
+                $countStmt = $pdo->prepare($countSql);
+                $countStmt->execute();
+            }
+            $total = (int) $countStmt->fetchColumn();
+            
+            // Busca os registros da página
+            $sql = "
+                SELECT ul.*, u.username, u.full_name
+                FROM upload_log ul
+                JOIN users u ON ul.user_id = u.id
+            ";
+            
+            if ($userId) {
+                $sql .= " WHERE ul.user_id = ?";
+            }
+            
+            $sql .= " ORDER BY ul.upload_date DESC LIMIT ? OFFSET ?";
+            
+            $stmt = $pdo->prepare($sql);
+            
+            if ($userId) {
+                $stmt->bindValue(1, $userId, \PDO::PARAM_INT);
+                $stmt->bindValue(2, $limit, \PDO::PARAM_INT);
+                $stmt->bindValue(3, $offset, \PDO::PARAM_INT);
+            } else {
+                $stmt->bindValue(1, $limit, \PDO::PARAM_INT);
+                $stmt->bindValue(2, $offset, \PDO::PARAM_INT);
+            }
+            
+            $stmt->execute();
+            
+            return [
+                'data' => $stmt->fetchAll(),
+                'total' => $total
+            ];
+            
+        } catch (\PDOException $e) {
+            error_log("Erro ao buscar histórico de uploads paginado: " . $e->getMessage());
+            return ['data' => [], 'total' => 0];
+        }
+    }
     
     /**
      * Busca informações de um upload específico por ID

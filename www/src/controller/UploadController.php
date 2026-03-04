@@ -20,14 +20,23 @@ class UploadController
         $view = \Slim\Views\Twig::fromRequest($request);
         $settings = $request->getAttribute('settings');
         
-        // Busca histórico de uploads de todos os usuários (admin e uploader)
-        $userId = $request->getAttribute('user_id');
-        $history = UserModel::getUploadHistory(null, 50); // null = todos os usuários
+        // Paginação
+        $params = $request->getQueryParams();
+        $page = max(1, (int) ($params['page'] ?? 1));
+        $perPage = 15;
+        $offset = ($page - 1) * $perPage;
+        
+        // Busca histórico de uploads paginado de todos os usuários
+        $result = UserModel::getUploadHistoryPaginated(null, $perPage, $offset);
+        $totalPages = (int) ceil($result['total'] / $perPage);
         
         return $view->render($response, 'upload.twig', [
             'username' => $request->getAttribute('username'),
             'role' => $request->getAttribute('user_role'),
-            'history' => $history,
+            'history' => $result['data'],
+            'current_page' => $page,
+            'total_pages' => $totalPages,
+            'total_records' => $result['total'],
             'max_file_size' => self::getMaxFileSize(),
             'max_file_size_mb' => self::getMaxFileSize() / 1024 / 1024,
             'url_base' => $settings['url_base']
