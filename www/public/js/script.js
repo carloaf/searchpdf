@@ -157,7 +157,7 @@ if (!window.searchAppInitialized) {
 
         if ($themePanel.length && $themeButton.length) {
             const THEME_STORAGE_KEY = 'searchpdf_theme_profile';
-            const defaultTheme = 'default';
+            const defaultTheme = 'midnight';
             const themeProfiles = {
                 default: {
                     label: 'Padrão',
