@@ -26,8 +26,20 @@ class UploadController
         $perPage = 15;
         $offset = ($page - 1) * $perPage;
         
+        // Ordenação
+        $allowedSorts = ['data', 'arquivo', 'ano_mes', 'usuario', 'status'];
+        $sort = $params['sort'] ?? 'data';
+        $order = strtoupper($params['order'] ?? 'DESC');
+        
+        if (!in_array($sort, $allowedSorts, true)) {
+            $sort = 'data';
+        }
+        if (!in_array($order, ['ASC', 'DESC'], true)) {
+            $order = 'DESC';
+        }
+        
         // Busca histórico de uploads paginado de todos os usuários
-        $result = UserModel::getUploadHistoryPaginated(null, $perPage, $offset);
+        $result = UserModel::getUploadHistoryPaginated(null, $perPage, $offset, $sort, $order);
         $totalPages = (int) ceil($result['total'] / $perPage);
         
         return $view->render($response, 'upload.twig', [
@@ -37,6 +49,8 @@ class UploadController
             'current_page' => $page,
             'total_pages' => $totalPages,
             'total_records' => $result['total'],
+            'sort' => $sort,
+            'order' => $order,
             'max_file_size' => self::getMaxFileSize(),
             'max_file_size_mb' => self::getMaxFileSize() / 1024 / 1024,
             'url_base' => $settings['url_base']

@@ -263,14 +263,16 @@ class UserModel
     }
 
     /**
-     * Busca histórico de uploads com paginação
+     * Busca histórico de uploads com paginação e ordenação
      * 
      * @param int|null $userId
      * @param int $limit
      * @param int $offset
+     * @param string $sort Coluna de ordenação (data, arquivo, ano_mes, usuario, status)
+     * @param string $order Direção da ordenação (ASC ou DESC)
      * @return array ['data' => [], 'total' => int]
      */
-    public static function getUploadHistoryPaginated($userId = null, $limit = 15, $offset = 0)
+    public static function getUploadHistoryPaginated($userId = null, $limit = 15, $offset = 0, $sort = 'data', $order = 'DESC')
     {
         try {
             $pdo = self::getConnection();
@@ -287,6 +289,27 @@ class UserModel
             }
             $total = (int) $countStmt->fetchColumn();
             
+            // Whitelist de colunas ordenáveis (evita SQL injection)
+            // 'ano_mes' usa FIELD() para ordenar os meses corretamente (Janeiro -> Dezembro)
+            $sortMap = [
+                'data'     => 'ul.upload_date',
+                'arquivo'  => 'ul.filename',
+                'ano_mes'  => "ul.year, FIELD(ul.month, 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro')",
+                'usuario'  => 'u.username',
+                'status'   => 'ul.status',
+            ];
+            
+            if (!isset($sortMap[$sort])) {
+                $sort = 'data';
+            }
+            $order = strtoupper($order) === 'ASC' ? 'ASC' : 'DESC';
+            
+            $orderBy = $sortMap[$sort] . ' ' . $order;
+            // Empate estável: sempre desempata por data de upload mais recente
+            if ($sort !== 'data') {
+                $orderBy .= ', ul.upload_date DESC';
+            }
+            
             // Busca os registros da página
             $sql = "
                 SELECT ul.*, u.username, u.full_name
@@ -298,7 +321,7 @@ class UserModel
                 $sql .= " WHERE ul.user_id = ?";
             }
             
-            $sql .= " ORDER BY ul.upload_date DESC LIMIT ? OFFSET ?";
+            $sql .= " ORDER BY " . $orderBy . " LIMIT ? OFFSET ?";
             
             $stmt = $pdo->prepare($sql);
             

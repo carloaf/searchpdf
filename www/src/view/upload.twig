@@ -2,6 +2,22 @@
 
 {% block title %}Upload de PDFs - SearchPDF{% endblock %}
 
+{% macro sortHeader(url_base, current_page, sort, order, column, defaultOrder, label) %}
+    {% set nextOrder = (sort == column) ? (order == 'ASC' ? 'DESC' : 'ASC') : defaultOrder %}
+    <th class="{{ sort == column ? 'table-active' : '' }}">
+        <a href="{{ url_base }}/upload?sort={{ column }}&order={{ nextOrder }}&page={{ current_page }}"
+           class="text-decoration-none d-inline-flex align-items-center gap-1 {{ sort == column ? 'fw-bold' : 'text-muted' }}"
+           title="Ordenar por {{ label }}">
+            {{ label }}
+            {% if sort == column %}
+                <i class="fas fa-sort-{{ order == 'ASC' ? 'up' : 'down' }}"></i>
+            {% else %}
+                <i class="fas fa-sort opacity-50"></i>
+            {% endif %}
+        </a>
+    </th>
+{% endmacro %}
+
 {% block content %}
 <div class="container mt-4">
     <div class="row mb-3">
@@ -161,12 +177,12 @@
                             <table class="table table-sm table-hover">
                                 <thead>
                                     <tr>
-                                        <th>Data/Hora</th>
-                                        <th>Arquivo</th>
-                                        <th>Ano/Mês</th>
+                                        {{ _self.sortHeader(url_base, current_page, sort, order, 'data', 'DESC', 'Data/Hora') }}
+                                        {{ _self.sortHeader(url_base, current_page, sort, order, 'arquivo', 'ASC', 'Arquivo') }}
+                                        {{ _self.sortHeader(url_base, current_page, sort, order, 'ano_mes', 'ASC', 'Ano/Mês') }}
                                         <th>Tamanho</th>
-                                        <th>Usuário</th>
-                                        <th>Status</th>
+                                        {{ _self.sortHeader(url_base, current_page, sort, order, 'usuario', 'ASC', 'Usuário') }}
+                                        {{ _self.sortHeader(url_base, current_page, sort, order, 'status', 'ASC', 'Status') }}
                                         <th>Ações</th>
                                     </tr>
                                 </thead>
@@ -211,7 +227,7 @@
                         <ul class="pagination pagination-sm justify-content-center mb-0">
                             {# Botão Anterior #}
                             <li class="page-item {{ current_page <= 1 ? 'disabled' : '' }}">
-                                <a class="page-link" href="{{ url_base }}/upload?page={{ current_page - 1 }}" aria-label="Anterior">
+                                <a class="page-link" href="{{ url_base }}/upload?page={{ current_page - 1 }}&sort={{ sort }}&order={{ order }}" aria-label="Anterior">
                                     <i class="fas fa-chevron-left"></i>
                                 </a>
                             </li>
@@ -219,7 +235,7 @@
                             {# Primeira página #}
                             {% if current_page > 3 %}
                                 <li class="page-item">
-                                    <a class="page-link" href="{{ url_base }}/upload?page=1">1</a>
+                                    <a class="page-link" href="{{ url_base }}/upload?page=1&sort={{ sort }}&order={{ order }}">1</a>
                                 </li>
                                 {% if current_page > 4 %}
                                     <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
@@ -229,7 +245,7 @@
                             {# Páginas ao redor da atual #}
                             {% for p in range(max(1, current_page - 2), min(total_pages, current_page + 2)) %}
                                 <li class="page-item {{ p == current_page ? 'active' : '' }}">
-                                    <a class="page-link" href="{{ url_base }}/upload?page={{ p }}">{{ p }}</a>
+                                    <a class="page-link" href="{{ url_base }}/upload?page={{ p }}&sort={{ sort }}&order={{ order }}">{{ p }}</a>
                                 </li>
                             {% endfor %}
 
@@ -239,13 +255,13 @@
                                     <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
                                 {% endif %}
                                 <li class="page-item">
-                                    <a class="page-link" href="{{ url_base }}/upload?page={{ total_pages }}">{{ total_pages }}</a>
+                                    <a class="page-link" href="{{ url_base }}/upload?page={{ total_pages }}&sort={{ sort }}&order={{ order }}">{{ total_pages }}</a>
                                 </li>
                             {% endif %}
 
                             {# Botão Próximo #}
                             <li class="page-item {{ current_page >= total_pages ? 'disabled' : '' }}">
-                                <a class="page-link" href="{{ url_base }}/upload?page={{ current_page + 1 }}" aria-label="Próximo">
+                                <a class="page-link" href="{{ url_base }}/upload?page={{ current_page + 1 }}&sort={{ sort }}&order={{ order }}" aria-label="Próximo">
                                     <i class="fas fa-chevron-right"></i>
                                 </a>
                             </li>
