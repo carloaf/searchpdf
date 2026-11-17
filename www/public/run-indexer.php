@@ -33,6 +33,7 @@ try {
     // Extrai informações do output
     $indexedCount = 0;
     $skippedCount = 0;
+    $removedCount = 0;
     
     if (preg_match('/Arquivos indexados\/atualizados:\s*(\d+)/', $output, $matches)) {
         $indexedCount = (int)$matches[1];
@@ -42,13 +43,18 @@ try {
         $skippedCount = (int)$matches[1];
     }
     
+    if (preg_match('/Registros órfãos removidos:\s*(\d+)/', $output, $matches)) {
+        $removedCount = (int)$matches[1];
+    }
+
     // Retorna resposta de sucesso
     http_response_code(200);
     echo json_encode([
         'success' => true,
-        'message' => "Indexação concluída. {$indexedCount} arquivos indexados, {$skippedCount} já atualizados.",
+        'message' => "Indexação concluída. {$indexedCount} arquivos indexados, {$skippedCount} já atualizados, {$removedCount} registros órfãos removidos.",
         'indexed' => $indexedCount,
         'skipped' => $skippedCount,
+        'removed' => $removedCount,
         'output' => $output
     ]);
     

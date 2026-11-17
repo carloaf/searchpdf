@@ -165,7 +165,7 @@ class StatsController
      */
     private static function normalizeMonthName($month)
     {
-        $month = strtolower($month);
+        $month = \Model\FilesModel::normalizeMonthKey($month);
         $monthMap = [
             'jan' => 'Janeiro',
             'janeiro' => 'Janeiro',

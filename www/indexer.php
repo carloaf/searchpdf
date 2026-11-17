@@ -79,6 +79,56 @@ function pdfNeedsIndexing($pdo, $filePath, $force = false) {
 }
 
 /**
+ * Converte um caminho gravado no banco para o caminho real no sistema de arquivos.
+ * O banco guarda caminhos absolutos do container (/var/www/html/public/uploads/...),
+ * que podem diferir de $uploadsDir quando o indexador roda fora do container.
+ * @param string $dbPath
+ * @param string $uploadsDir
+ * @return string|null
+ */
+function resolveDbPath($dbPath, $uploadsDir) {
+    $uploadsDir = rtrim($uploadsDir, DIRECTORY_SEPARATOR);
+
+    if (strpos($dbPath, $uploadsDir . DIRECTORY_SEPARATOR) === 0) {
+        return $dbPath;
+    }
+
+    $marker = '/uploads/';
+    $pos = strpos($dbPath, $marker);
+    if ($pos === false) {
+        return null;
+    }
+
+    return $uploadsDir . DIRECTORY_SEPARATOR . ltrim(substr($dbPath, $pos + strlen($marker)), '/');
+}
+
+/**
+ * Remove do índice os registros cujos PDFs não existem mais no disco.
+ * @param PDO $pdo
+ * @param string $uploadsDir
+ * @return int Quantidade de registros removidos.
+ */
+function removeOrphanedIndexEntries($pdo, $uploadsDir) {
+    $stmt = $pdo->query("SELECT id, file_path FROM pdf_index");
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $deleteStmt = $pdo->prepare("DELETE FROM pdf_index WHERE id = ?");
+    $removed = 0;
+
+    foreach ($rows as $row) {
+        $realPath = resolveDbPath($row['file_path'], $uploadsDir);
+        if ($realPath === null || is_file($realPath)) {
+            continue;
+        }
+
+        $deleteStmt->execute([$row['id']]);
+        $removed++;
+    }
+
+    return $removed;
+}
+
+/**
  * Extrai o texto do PDF e grava/atualiza o registro em pdf_index.
  * @param PDO $pdo
  * @param string $filePath
@@ -187,6 +237,18 @@ if (empty($files)) {
     echo "AVISO: Nenhum arquivo PDF encontrado em '$uploadsDir'.\n";
 } else {
     echo "Encontrados " . count($files) . " arquivos PDF para processar.\n";
+}
+
+// Limpa registros de PDFs que foram removidos do disco (somente na varredura completa).
+if ($singleFile === null && is_dir($uploadsDir)) {
+    try {
+        $orphansRemoved = removeOrphanedIndexEntries($pdo, $uploadsDir);
+        if ($orphansRemoved > 0) {
+            echo "Registros órfãos removidos: $orphansRemoved\n";
+        }
+    } catch (PDOException $e) {
+        echo "AVISO: Não foi possível remover registros órfãos: " . $e->getMessage() . "\n";
+    }
 }
 
 $indexedCount = 0;

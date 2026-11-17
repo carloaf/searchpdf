@@ -229,6 +229,16 @@ Com `--file=<caminho>`, indexa apenas o arquivo informado (usado pelo upload):
 php indexer.php --file="/var/www/html/public/uploads/BI 2026/Novembro/arquivo.pdf"
 ```
 
+### Remoção de registros órfãos
+
+Na varredura completa (sem `--file`), o indexador também remove de `pdf_index` os registros cujos PDFs não existem mais no disco e informa a quantidade:
+
+```
+Registros órfãos removidos: 16
+```
+
+Isso mantém o gráfico de distribuição de documentos (`/stats/document-distribution`) e os resultados de busca alinhados com os arquivos realmente presentes em `uploads/`. O modo `--file` nunca remove registros.
+
 ## 📊 Monitoramento
 
 ### Ver Logs de Upload
