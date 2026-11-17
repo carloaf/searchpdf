@@ -221,6 +221,40 @@ class UserModel
     }
     
     /**
+     * Atualiza o status do último upload de um arquivo
+     *
+     * @param string $filePath
+     * @param string $status success|failed|indexed
+     * @param string|null $errorMessage
+     * @return bool
+     */
+    public static function updateUploadStatusByPath($filePath, $status, $errorMessage = null)
+    {
+        try {
+            $pdo = self::getConnection();
+
+            $stmt = $pdo->prepare("
+                UPDATE upload_log
+                SET status = ?, error_message = COALESCE(?, error_message)
+                WHERE id = (
+                    SELECT id FROM (
+                        SELECT id FROM upload_log
+                        WHERE file_path = ?
+                        ORDER BY upload_date DESC, id DESC
+                        LIMIT 1
+                    ) AS latest
+                )
+            ");
+
+            return $stmt->execute([$status, $errorMessage, $filePath]);
+
+        } catch (\PDOException $e) {
+            error_log("Erro ao atualizar status do upload: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Busca histórico de uploads
      * 
      * @param int|null $userId

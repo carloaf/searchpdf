@@ -62,6 +62,9 @@ class UploadController
      */
     public static function processUpload($request, $response)
     {
+        // A indexação do PDF ocorre na mesma requisição, logo após o upload
+        @set_time_limit(300);
+
         $settings = $request->getAttribute('settings');
         $userId = $request->getAttribute('user_id');
         $uploadedFiles = $request->getUploadedFiles();
@@ -213,12 +216,27 @@ class UploadController
             
             UserModel::logUpload($logData);
             
-            // Trigger de indexação (opcional - implementar depois)
-            self::triggerIndexation($targetPath);
+            // Indexa o arquivo imediatamente, sem depender do botão de sincronização
+            $indexResult = self::triggerIndexation($targetPath);
+            if ($indexResult['success']) {
+                UserModel::updateUploadStatusByPath($targetPath, 'indexed');
+            } else {
+                // Mantém o upload como sucesso, mas registra o motivo da falha de indexação
+                UserModel::updateUploadStatusByPath($targetPath, 'success', $indexResult['message']);
+            }
+            
+            $message = $indexResult['success']
+                ? 'Arquivo enviado e indexado com sucesso!'
+                    . ($indexResult['pages'] > 0 ? " ({$indexResult['pages']} página(s))" : '')
+                : 'Arquivo enviado com sucesso, mas a indexação automática falhou: '
+                    . $indexResult['message'];
             
             return self::jsonResponse($response, [
                 'success' => true,
-                'message' => 'Arquivo enviado com sucesso!',
+                'message' => $message,
+                'indexed' => $indexResult['success'],
+                'pages' => $indexResult['pages'],
+                'index_error' => $indexResult['success'] ? null : $indexResult['message'],
                 'file' => [
                     'filename' => $sanitizedFilename,
                     'size' => filesize($targetPath),
@@ -549,15 +567,69 @@ class UploadController
     }
     
     /**
-     * Dispara a indexação do arquivo (placeholder)
-     * TODO: Implementar integração com o indexador existente
+     * Indexa imediatamente o arquivo recém-enviado.
+     *
+     * Executa o indexer.php em modo de arquivo único (--file), mantendo o
+     * mesmo formato de índice usado pela sincronização completa.
+     *
+     * @param string $filePath Caminho absoluto do PDF
+     * @return array{success: bool, pages: int, message: string}
      */
     private static function triggerIndexation($filePath)
     {
-        // Aqui você pode chamar o indexer.php ou adicionar à fila de indexação
-        // Por exemplo:
-        // exec("php /var/www/html/indexer.php --file=" . escapeshellarg($filePath) . " > /dev/null 2>&1 &");
-        
-        error_log("Arquivo pronto para indexação: $filePath");
+        $indexerPath = dirname(__DIR__, 2) . '/indexer.php';
+
+        if (!is_file($indexerPath)) {
+            error_log("Indexador não encontrado: $indexerPath");
+            return ['success' => false, 'pages' => 0, 'message' => 'indexador não encontrado.'];
+        }
+
+        if (!function_exists('exec')) {
+            error_log('Função exec desabilitada; não é possível indexar automaticamente.');
+            return ['success' => false, 'pages' => 0, 'message' => 'função exec desabilitada no PHP.'];
+        }
+
+        $phpBinary = PHP_BINDIR . '/php';
+        if (!is_executable($phpBinary)) {
+            $phpBinary = (PHP_SAPI === 'cli' && PHP_BINARY) ? PHP_BINARY : 'php';
+        }
+
+        $output = [];
+        $exitCode = 0;
+        $command = escapeshellarg($phpBinary)
+            . ' ' . escapeshellarg($indexerPath)
+            . ' --file=' . escapeshellarg($filePath)
+            . ' 2>&1';
+
+        exec($command, $output, $exitCode);
+        $outputText = implode("\n", $output);
+
+        if ($exitCode !== 0) {
+            error_log("Falha ao indexar $filePath (exit $exitCode): $outputText");
+            return ['success' => false, 'pages' => 0, 'message' => 'falha ao executar o indexador.'];
+        }
+
+        $indexedCount = 0;
+        if (preg_match('/Arquivos indexados\/atualizados:\s*(\d+)/', $outputText, $matches)) {
+            $indexedCount = (int) $matches[1];
+        }
+
+        if ($indexedCount < 1) {
+            error_log("Indexação não gerou registro para $filePath: $outputText");
+            return [
+                'success' => false,
+                'pages' => 0,
+                'message' => 'não foi possível extrair texto do PDF (verifique se ele é digitalizado).'
+            ];
+        }
+
+        $pages = 0;
+        if (preg_match('/OK \((\d+) páginas?\)/', $outputText, $matches)) {
+            $pages = (int) $matches[1];
+        }
+
+        error_log("Arquivo indexado imediatamente: $filePath ($pages páginas)");
+
+        return ['success' => true, 'pages' => $pages, 'message' => 'arquivo indexado com sucesso.'];
     }
 }

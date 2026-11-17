@@ -137,7 +137,7 @@
                         <li>Tamanho máximo: <strong>{{ max_file_size_mb }} MB</strong></li>
                         <li>Categoria: <strong>Boletim Interno (BI)</strong></li>
                         <li>Selecione o ano e mês corretamente</li>
-                        <li>O arquivo será indexado automaticamente</li>
+                        <li>O arquivo é indexado imediatamente após o envio</li>
                         <li>Arquivos duplicados não serão aceitos</li>
                     </ul>
                 </div>
@@ -391,7 +391,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Desabilita botão
         btnUpload.disabled = true;
-        btnUpload.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+        btnUpload.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando e indexando...';
         
         // Mostra barra de progresso
         uploadProgress.classList.remove('d-none');
@@ -418,9 +418,12 @@ document.addEventListener('DOMContentLoaded', function() {
             progressBar.textContent = '100%';
             
             if (data.success) {
-                uploadMessage.innerHTML = '<div class="alert alert-success"><i class="fas fa-check-circle"></i> ' + data.message + '</div>';
+                const indexed = data.indexed === true;
+                const alertClass = indexed ? 'alert-success' : 'alert-warning';
+                const iconClass = indexed ? 'fa-check-circle' : 'fa-exclamation-triangle';
+                uploadMessage.innerHTML = '<div class="alert ' + alertClass + '"><i class="fas ' + iconClass + '"></i> ' + data.message + '</div>';
                 form.reset();
-                setTimeout(() => location.reload(), 2000);
+                setTimeout(() => location.reload(), indexed ? 2000 : 6000);
             } else {
                 uploadMessage.innerHTML = '<div class="alert alert-danger"><i class="fas fa-times-circle"></i> ' + data.error + '</div>';
             }

@@ -180,7 +180,8 @@ Após login bem-sucedido, você será redirecionado automaticamente para: `http:
 1. Selecione um arquivo PDF
 2. Escolha categoria (BI/BA), ano e mês
 3. Clique em "Enviar Arquivo"
-4. Verifique o histórico de uploads
+4. Aguarde a mensagem de confirmação — o PDF é indexado imediatamente e o histórico exibe o status **Indexado**
+5. Verifique o histórico de uploads
 
 ### 5. **Verificar Arquivo no Sistema**
 
@@ -191,29 +192,42 @@ docker exec searchpdf_app ls -lah /var/www/html/public/uploads/BI\ 2025/Janeiro/
 
 ## 🔄 Integração com Indexação
 
-### Indexação Manual
-
-Na página de upload (`/upload`), há um botão **"Sincronizar / Indexar PDFs"** que executa a indexação manual de todos os arquivos novos.
-
 ### Indexação Automática (após upload)
 
-O sistema está preparado para disparar a indexação automática. Para ativar:
+A indexação é executada **imediatamente** ao final de cada upload, na mesma requisição. O `UploadController` chama o `indexer.php` em modo de arquivo único:
 
-1. Edite `www/src/controller/UploadController.php`
-2. Localize o método `triggerIndexation()`
-3. Descomente e ajuste a chamada ao `indexer.php`:
-
-```php
-private static function triggerIndexation($filePath)
-{
-    exec("php /var/www/html/indexer.php --file=" . escapeshellarg($filePath) . " > /dev/null 2>&1 &");
-    error_log("Arquivo indexado: $filePath");
-}
+```bash
+php /var/www/html/indexer.php --file="/var/www/html/public/uploads/BI 2026/Novembro/arquivo.pdf"
 ```
 
-### Reindex via Página de Upload
+Nesse modo o indexador:
 
-Usuários admin/uploader têm acesso ao botão de reindex na página `/upload`, que executa o script `run-indexer.php`.
+1. Valida que o caminho é um PDF dentro do diretório de uploads;
+2. Extrai o texto (`pdftotext`) e o total de páginas (`pdfinfo`);
+3. Insere ou atualiza o registro em `pdf_index` (forçando a reindexação do arquivo enviado);
+4. Retorna a quantidade de páginas indexadas.
+
+O status do upload em `upload_log` passa de `success` para `indexed` quando a indexação conclui com sucesso. A resposta JSON do upload inclui `indexed`, `pages` e `index_error`, e a página de upload exibe o resultado sem exigir o clique em **"Sincronizar / Indexar PDFs"**.
+
+Se o PDF não tiver texto extraível (por exemplo, digitalizado sem OCR), o upload continua válido, mas a interface avisa que a indexação automática falhou.
+
+### Indexação Manual
+
+O botão **"Sincronizar / Indexar PDFs"** na página `/upload` continua disponível para varrer todo o diretório de uploads e indexar arquivos pendentes, executando o script `run-indexer.php`.
+
+### Execução via CLI
+
+Sem argumentos, o indexador varre todo o diretório de uploads:
+
+```bash
+php indexer.php
+```
+
+Com `--file=<caminho>`, indexa apenas o arquivo informado (usado pelo upload):
+
+```bash
+php indexer.php --file="/var/www/html/public/uploads/BI 2026/Novembro/arquivo.pdf"
+```
 
 ## 📊 Monitoramento
 

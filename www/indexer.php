@@ -23,6 +23,16 @@ if (!$uploadsDir) {
     }
 }
 
+// Permite indexar um único arquivo (usado após o upload): php indexer.php --file=/caminho/arquivo.pdf
+$singleFile = null;
+if (PHP_SAPI === 'cli' && isset($argv)) {
+    foreach (array_slice($argv, 1) as $arg) {
+        if (strpos($arg, '--file=') === 0) {
+            $singleFile = substr($arg, strlen('--file='));
+        }
+    }
+}
+
 /**
  * Função recursiva para buscar todos os arquivos PDF em um diretório e suas subpastas.
  * @param string $dir O diretório inicial.
@@ -40,6 +50,69 @@ function getAllPdfs($dir) {
         }
     }
     return $files;
+}
+
+/**
+ * Verifica se um PDF precisa ser (re)indexado.
+ * @param PDO $pdo
+ * @param string $filePath
+ * @param bool $force Ignora a checagem de data de modificação.
+ * @return bool
+ */
+function pdfNeedsIndexing($pdo, $filePath, $force = false) {
+    if ($force) {
+        return true;
+    }
+
+    $stmtCheck = $pdo->prepare("SELECT last_indexed_at FROM pdf_index WHERE file_path = ?");
+    $stmtCheck->execute([$filePath]);
+    $result = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+
+    if (!$result) {
+        return true;
+    }
+
+    $fileModTime = @filemtime($filePath);
+    $indexedTime = strtotime($result['last_indexed_at']);
+
+    return $fileModTime === false || $fileModTime > $indexedTime;
+}
+
+/**
+ * Extrai o texto do PDF e grava/atualiza o registro em pdf_index.
+ * @param PDO $pdo
+ * @param string $filePath
+ * @return array{success: bool, pages: int}
+ */
+function indexPdfFile($pdo, $filePath) {
+    // Extrai o texto
+    $command = "pdftotext -enc UTF-8 " . escapeshellarg($filePath) . " -";
+    $text = shell_exec($command);
+
+    // Extrai o número de páginas
+    $totalPages = 0;
+    $pdfInfoOutput = shell_exec("pdfinfo " . escapeshellarg($filePath));
+    if (is_string($pdfInfoOutput) && preg_match('/Pages:\s*(\d+)/', $pdfInfoOutput, $matches)) {
+        $totalPages = (int) $matches[1];
+    }
+
+    if ($text === null || empty(trim($text))) {
+        return ['success' => false, 'pages' => 0];
+    }
+
+    $stmtCheck = $pdo->prepare("SELECT id FROM pdf_index WHERE file_path = ?");
+    $stmtCheck->execute([$filePath]);
+    $existingId = $stmtCheck->fetchColumn();
+
+    if ($existingId !== false) {
+        $stmtUpdate = $pdo->prepare("UPDATE pdf_index SET content = ?, total_pages = ? WHERE file_path = ?");
+        $stmtUpdate->execute([$text, $totalPages, $filePath]);
+    } else {
+        $stmtInsert = $pdo->prepare("INSERT INTO pdf_index (file_path, content, total_pages) VALUES (?, ?, ?)");
+        $stmtInsert->execute([$filePath, $text, $totalPages]);
+    }
+
+    return ['success' => true, 'pages' => $totalPages];
 }
 
 // Conexão PDO, forçando o charset para utf8mb4
@@ -88,68 +161,68 @@ $pdo->exec("
 
 echo "Tabelas 'pdf_index' e 'search_log' verificadas/criadas com sucesso.\n";
 
-$files = getAllPdfs($uploadsDir);
+// Em modo de arquivo único valida o caminho e indexa apenas ele; caso contrário varre todo o diretório.
+if ($singleFile !== null) {
+    $realFile = realpath($singleFile);
+    $realUploadsDir = realpath($uploadsDir);
+
+    $isPdf = $realFile !== false
+        && is_file($realFile)
+        && strtolower(pathinfo($realFile, PATHINFO_EXTENSION)) === 'pdf';
+    $insideUploads = $realUploadsDir !== false
+        && strpos($realFile . DIRECTORY_SEPARATOR, rtrim($realUploadsDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR) === 0;
+
+    if (!$isPdf || !$insideUploads) {
+        echo "ERRO: Arquivo inválido para indexação: $singleFile\n";
+        exit(1);
+    }
+
+    $files = [$realFile];
+    echo "Modo de arquivo único: $realFile\n";
+} else {
+    $files = getAllPdfs($uploadsDir);
+}
+
 if (empty($files)) {
     echo "AVISO: Nenhum arquivo PDF encontrado em '$uploadsDir'.\n";
 } else {
     echo "Encontrados " . count($files) . " arquivos PDF para processar.\n";
 }
 
-// Prepara as queries SQL para incluir total_pages
-$stmtCheck = $pdo->prepare("SELECT last_indexed_at FROM pdf_index WHERE file_path = ?");
-$stmtInsert = $pdo->prepare("INSERT INTO pdf_index (file_path, content, total_pages) VALUES (?, ?, ?)");
-$stmtUpdate = $pdo->prepare("UPDATE pdf_index SET content = ?, total_pages = ? WHERE file_path = ?");
-
 $indexedCount = 0;
 $skippedCount = 0;
+$failedCount = 0;
 
 foreach ($files as $filePath) {
-    $fileModTime = filemtime($filePath);
-    $stmtCheck->execute([$filePath]);
-    $result = $stmtCheck->fetch(PDO::FETCH_ASSOC);
-
-    $needsIndexing = true;
-    if ($result) {
-        $indexedTime = strtotime($result['last_indexed_at']);
-        if ($fileModTime <= $indexedTime) {
-            $needsIndexing = false;
+    try {
+        if (!pdfNeedsIndexing($pdo, $filePath, $singleFile !== null)) {
             $skippedCount++;
+            continue;
         }
-    }
 
-    if ($needsIndexing) {
         echo "Indexando: $filePath ... ";
-        
-        // Extrai o texto
-        $command = "pdftotext -enc UTF-8 " . escapeshellarg($filePath) . " -";
-        $text = shell_exec($command);
-        
-        // Extrai o número de páginas
-        $totalPages = 0;
-        $pdfInfoOutput = shell_exec("pdfinfo " . escapeshellarg($filePath));
-        if (is_string($pdfInfoOutput) && preg_match('/Pages:\s*(\d+)/', $pdfInfoOutput, $matches)) {
-            $totalPages = (int)$matches[1];
-        }
 
-        if ($text === null || empty(trim($text))) {
+        $result = indexPdfFile($pdo, $filePath);
+
+        if (!$result['success']) {
+            $failedCount++;
             echo "FALHA (não foi possível extrair conteúdo).\n";
             continue;
         }
 
-        if ($result) {
-            // A query UPDATE é (content = ?, total_pages = ?, file_path = ?), então a ordem é [texto, paginas, caminho]
-            $stmtUpdate->execute([$text, $totalPages, $filePath]);
-        } else {
-            // A query INSERT é (file_path, content, total_pages), então a ordem é [caminho, texto, paginas]
-            $stmtInsert->execute([$filePath, $text, $totalPages]);
-        }
         $indexedCount++;
-        echo "OK ($totalPages páginas).\n";
+        echo "OK ({$result['pages']} páginas).\n";
+    } catch (PDOException $e) {
+        $failedCount++;
+        echo "FALHA (" . $e->getMessage() . ").\n";
     }
 }
 
 echo "\n--- Indexação Concluída ---\n";
 echo "Arquivos indexados/atualizados: $indexedCount\n";
 echo "Arquivos já atualizados (pulados): $skippedCount\n";
+if ($failedCount > 0) {
+    echo "Arquivos com falha: $failedCount\n";
+}
 
 ?>

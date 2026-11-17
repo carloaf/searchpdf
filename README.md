@@ -92,7 +92,7 @@ Uma cópia de exemplo é fornecida como `www/config/settings-dist.php`.
 - ✅ **Organização automática** em pastas por ano/mês/categoria
 - ✅ **Auditoria completa** de todos os uploads
 - ✅ **Interface intuitiva** com histórico de uploads
-- ✅ **Preparado para indexação automática**
+- ✅ **Indexação imediata após o upload** (com varredura manual opcional)
 - 🆕 **Acesso público à busca** (não requer autenticação)
 - 🆕 **Login via modal** na página principal (botão com ícone de chave)
 
