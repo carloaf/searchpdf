@@ -7,7 +7,7 @@ O projeto trata-se de um sistema que busca palavras em conteúdos de arquivos em
 As tecnologias usadas são php8.1, apache, slim, mariadb, etc.
 Você é também um excelente design e reconhecido por criar páginas que harmonizam cores e visualizações excelentes na página como um todo e harmonização de seus componentes.
 
-Concluída a etapa de copiar/migrar todo o conteúdo do projeto para um servidor em tsh login --proxy=teleport.7cta.eb.mil.br --user=cleitonpaulo.martins@eb.mil.br
-tsh ssh suporte@VM-7CTA-11DSUP-ARRANCHAMENTO-HOMOLOGACAO "ls -la /workspace/searchpdf/"
+Concluída a etapa de copiar/migrar todo o conteúdo do projeto para um servidor em tsh login --proxy=teleport.7cta.eb.mil.br --user=layon_amorim@eb.mil.br
+tsh ssh suporte@VM-7CTA-11DSUP-PESQUISAPDF-PRODUCAO "ls -la /workspace/searchpdf/"
 Copiamos as imagens docker também, pois não temos acesso no servidor para buildar as imagens do dockerhub.
 

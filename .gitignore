@@ -8,6 +8,9 @@
 .env.local
 .env.*.local
 
+# Certificados gerados localmente (não versionar)
+/nginx-proxy/certs/
+
 # Arquivos de configuração locais
 /www/config/settings.php
 

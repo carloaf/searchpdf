@@ -100,16 +100,18 @@ Uma cópia de exemplo é fornecida como `www/config/settings-dist.php`.
 
 ### 🌐 URLs de Acesso
 
-**Servidor de Produção**: VM-7CTA-11DSUP-ARRANCHAMENTO-HOMOLOGACAO
+**Servidor de Produção**: VM-7CTA-11DSUP-PESQUISAPDF-PRODUCAO
 
-- **SearchPDF**: http://10.166.72.36/searchpdf/
+- **SearchPDF (DNS/HTTPS)**: https://sipbo.11dsup.eb.mil.br/
+- **SearchPDF (fallback via IP)**: http://10.166.72.36/searchpdf/
 - **SAGA** (Sistema principal): http://10.166.72.36/
 
 ### 📋 Arquitetura
 
-O sistema utiliza nginx como proxy reverso na porta 80 para rotear requisições:
+O sistema utiliza nginx como proxy reverso nas portas 80 e 443 para rotear requisições:
 - Requisições para `/` → Sistema SAGA
 - Requisições para `/searchpdf/` → Sistema SearchPDF
+- Requisições HTTPS para `sipbo.11dsup.eb.mil.br` (encaminhadas pelo proxy externo `10.166.72.33` → `10.166.72.36:443`) → Sistema SearchPDF
 
 📖 **Documentação completa**: [docs/NGINX_PROXY_SETUP.md](docs/NGINX_PROXY_SETUP.md)
 
