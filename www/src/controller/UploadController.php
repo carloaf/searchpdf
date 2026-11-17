@@ -335,7 +335,22 @@ class UploadController
     private static function buildTargetDirectory($baseDir, $year, $month, $category)
     {
         // Padrão: /uploads/BI YYYY/Mês/
-        return rtrim($baseDir, '/') . '/' . $category . ' ' . $year . '/' . $month;
+        $yearDir = rtrim($baseDir, '/') . '/' . $category . ' ' . $year;
+
+        // Reutiliza uma pasta de mês já existente mesmo com grafia diferente (ex.: "Marco" e "Março")
+        if (is_dir($yearDir)) {
+            $monthKey = FilesModel::normalizeMonthKey($month);
+            foreach (scandir($yearDir) as $entry) {
+                if ($entry === '.' || $entry === '..' || !is_dir($yearDir . '/' . $entry)) {
+                    continue;
+                }
+                if (FilesModel::normalizeMonthKey($entry) === $monthKey) {
+                    return $yearDir . '/' . $entry;
+                }
+            }
+        }
+
+        return $yearDir . '/' . $month;
     }
     
     /**

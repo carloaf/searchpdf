@@ -51,11 +51,11 @@ class FilesModel
             }
         }
         
-        // Dicionário para traduzir e ordenar os meses
+        // Dicionário para traduzir e ordenar os meses (chaves normalizadas: minúsculas e sem acento)
         $monthMap = [
             'jan' => [1, 'Janeiro'], 'janeiro' => [1, 'Janeiro'],
             'fev' => [2, 'Fevereiro'], 'fevereiro' => [2, 'Fevereiro'],
-            'mar' => [3, 'Março'], 'marco' => [3, 'Março'], 'marÇo' => [3, 'Março'],
+            'mar' => [3, 'Março'], 'marco' => [3, 'Março'],
             'abr' => [4, 'Abril'], 'abril' => [4, 'Abril'],
             'mai' => [5, 'Maio'], 'maio' => [5, 'Maio'],
             'jun' => [6, 'Junho'], 'junho' => [6, 'Junho'],
@@ -69,14 +69,20 @@ class FilesModel
 
         // Função de comparação customizada para ordenar as pastas
         usort($dirs, function($a, $b) use ($monthMap) {
-            $aLower = strtolower($a);
-            $bLower = strtolower($b);
-            $aIsMonth = isset($monthMap[$aLower]);
-            $bIsMonth = isset($monthMap[$bLower]);
+            $aMonth = self::getMonthInfo($a, $monthMap);
+            $bMonth = self::getMonthInfo($b, $monthMap);
 
             // Se ambos são meses, ordena por número do mês
-            if ($aIsMonth && $bIsMonth) {
-                return $monthMap[$aLower][0] <=> $monthMap[$bLower][0];
+            if ($aMonth !== null && $bMonth !== null) {
+                return $aMonth[0] <=> $bMonth[0];
+            }
+
+            // Meses vêm antes dos demais diretórios (garante ordenação total e estável)
+            if ($aMonth !== null) {
+                return -1;
+            }
+            if ($bMonth !== null) {
+                return 1;
             }
             
             // Extrai anos de strings como "BI 2025", "2025", etc.
@@ -97,7 +103,7 @@ class FilesModel
             
             // Se ambos contêm anos, ordena em ordem decrescente (mais recente primeiro)
             if ($aYear !== null && $bYear !== null) {
-                return $bYear <=> $aYear; // 2025, 2024, 2023...
+                return ($bYear <=> $aYear) ?: strnatcasecmp($a, $b); // 2025, 2024, 2023...
             }
             
             // Ordenação alfabética para o resto
@@ -125,9 +131,9 @@ class FilesModel
 
             // Traduz o nome da pasta se for um mês
             $folderName = htmlspecialchars($folder);
-            $folderKey = strtolower($folder);
-            if (isset($monthMap[$folderKey])) {
-                $folderName = $monthMap[$folderKey][1];
+            $folderMonth = self::getMonthInfo($folder, $monthMap);
+            if ($folderMonth !== null) {
+                $folderName = htmlspecialchars($folderMonth[1]);
             }
 
             $html .= '<li>';
@@ -193,6 +199,32 @@ class FilesModel
         $html .= '</ul>';
 
         return ['html' => $html, 'count' => $totalFileCount];
+    }
+
+    /**
+     * Normaliza o nome de uma pasta de mês para comparação, ignorando acentos e diferenças de caixa.
+     * Necessário porque nem todas as pastas usam a mesma grafia (ex.: "Março" e "Marco").
+     */
+    public static function normalizeMonthKey($name)
+    {
+        return strtr(mb_strtolower(trim($name), 'UTF-8'), [
+            'á' => 'a', 'à' => 'a', 'â' => 'a', 'ã' => 'a', 'ä' => 'a',
+            'é' => 'e', 'è' => 'e', 'ê' => 'e',
+            'í' => 'i', 'ì' => 'i', 'î' => 'i',
+            'ó' => 'o', 'ò' => 'o', 'ô' => 'o', 'õ' => 'o',
+            'ú' => 'u', 'ù' => 'u', 'û' => 'u', 'ü' => 'u',
+            'ç' => 'c',
+        ]);
+    }
+
+    /**
+     * Identifica um diretório de mês do calendário.
+     *
+     * @return array{0: int, 1: string}|null [número do mês, nome em português] ou null se não for mês
+     */
+    private static function getMonthInfo($folderName, array $monthMap)
+    {
+        return $monthMap[self::normalizeMonthKey($folderName)] ?? null;
     }
 
     /**
